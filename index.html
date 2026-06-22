@@ -330,6 +330,41 @@ table.dt tbody tr:hover td { background: var(--card2); }
 .sleep-stat-num { font-family: var(--mono); font-size: 56px; font-weight: 500; line-height: 1; }
 .sleep-stat-sub { font-size: 12px; color: var(--muted2); margin-top: 8px; }
 
+/* ─── DAY LOG GRID ───────────────────────────────────────────────────────── */
+.daylog-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.dl-card {
+  border: 2px solid var(--border); border-radius: 16px;
+  padding: 18px 14px; cursor: pointer; transition: all 0.18s;
+  background: var(--card2); user-select: none; position: relative;
+}
+.dl-card:hover { border-color: var(--border2); }
+.dl-card.checked {
+  border-color: var(--p); background: linear-gradient(135deg,#7c5cfc14,#4f46e510);
+  box-shadow: 0 0 0 1px var(--p)44;
+}
+.dl-card.checked .dl-check { background: var(--p); border-color: var(--p); color: #fff; }
+.dl-card.checked .dl-sets { display: flex; }
+.dl-ico { font-size: 26px; margin-bottom: 8px; }
+.dl-name { font-size: 13px; font-weight: 700; margin-bottom: 12px; }
+.dl-check {
+  width: 22px; height: 22px; border-radius: 7px;
+  border: 2px solid var(--border2); position: absolute; top: 14px; right: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; transition: all 0.15s;
+}
+.dl-sets {
+  display: none; align-items: center; gap: 8px; margin-top: 4px;
+}
+.dl-sets input {
+  width: 52px; background: var(--card); border: 1px solid var(--border2);
+  color: var(--text); border-radius: 8px; padding: 6px 8px;
+  font-size: 14px; font-family: var(--mono); font-weight: 500;
+  text-align: center; outline: none;
+}
+.dl-sets input:focus { border-color: var(--p); }
+.dl-sets-lbl { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: 1px; }
+@media (max-width: 768px) { .daylog-grid { grid-template-columns: repeat(2, 1fr); } }
+
 /* ─── MISC ───────────────────────────────────────────────────────────────── */
 .empty { text-align: center; padding: 48px; color: var(--muted); font-size: 13px; font-family: var(--mono); letter-spacing: 1px; }
 .frow { display: flex; gap: 10px; align-items: center; }
@@ -509,43 +544,18 @@ table.dt tbody tr:hover td { background: var(--card2); }
         <div class="muscle-grid" id="muscleGrid"></div>
       </div>
       <div class="card">
-        <div class="card-head"><div class="card-label">LOG A SET</div></div>
-        <span class="toggle-lnk" id="cardioToggle" onclick="toggleCardio()">⇄ Switch to Cardio</span>
-        <div class="form-grid form-5" id="workoutForm">
-          <div class="fg">
-            <label>EXERCISE</label>
-            <select id="exSel" onchange="loadPrev()">
-              <optgroup label="CHEST"><option>Bench Press</option><option>Incline Dumbbell Press</option><option>Cable Fly</option><option>Push-Up</option></optgroup>
-              <optgroup label="BACK"><option>Pull-Up</option><option>Barbell Row</option><option>Lat Pulldown</option><option>Seated Cable Row</option></optgroup>
-              <optgroup label="SHOULDERS"><option>Overhead Press</option><option>Lateral Raise</option><option>Face Pull</option></optgroup>
-              <optgroup label="BICEPS"><option>Barbell Curl</option><option>Hammer Curl</option><option>Incline Dumbbell Curl</option></optgroup>
-              <optgroup label="TRICEPS"><option>Tricep Pushdown</option><option>Skull Crusher</option><option>Overhead Tricep Extension</option></optgroup>
-              <optgroup label="LEGS"><option>Squat</option><option>Romanian Deadlift</option><option>Leg Press</option><option>Leg Curl</option><option>Calf Raise</option></optgroup>
-              <optgroup label="CORE"><option>Plank</option><option>Ab Wheel Rollout</option><option>Hanging Leg Raise</option></optgroup>
-            </select>
-            <div class="prev-hint" id="prevHint"></div>
-          </div>
-          <div class="fg"><label>SET #</label><input type="number" id="setN" min="1" value="1" onchange="loadPrev()"></div>
-          <div class="fg"><label>REPS</label><input type="number" id="setR" min="1"></div>
-          <div class="fg"><label>WEIGHT LBS</label><input type="number" id="setW" min="0"></div>
-          <div class="fg"><label>DATE</label><input type="date" id="setD"></div>
-          <div style="padding-top:24px"><button class="btn" id="logSetBtn" onclick="logSet()">LOG</button></div>
+        <div class="card-head">
+          <div class="card-label">LOG TODAY'S WORKOUT</div>
+          <div class="fg" style="margin:0"><input type="date" id="wkDate" style="width:auto;padding:8px 12px;font-size:12px"></div>
         </div>
-        <div class="form-grid form-4" id="cardioForm" style="display:none">
-          <div class="fg"><label>TYPE</label><select id="cardioEx"><option>Running</option><option>Treadmill</option><option>Cycling</option><option>Stairmaster</option></select></div>
-          <div class="fg"><label>MILES</label><input type="number" id="cardioMi" min="0" step="0.1"></div>
-          <div class="fg"><label>DATE</label><input type="date" id="cardioD"></div>
-          <div style="padding-top:24px"><button class="btn" id="logCardBtn" onclick="logCardio()">LOG</button></div>
+        <div class="daylog-grid" id="daylogGrid"></div>
+        <div style="margin-top:20px;display:flex;gap:12px;align-items:center">
+          <button class="btn" id="logDayBtn" onclick="logDay()">LOG WORKOUT</button>
+          <span style="font-family:var(--mono);font-size:11px;color:var(--muted)" id="logDayHint">Check muscles you trained</span>
         </div>
       </div>
       <div class="card">
-        <div class="card-head">
-          <div class="card-label">WORKOUT HISTORY</div>
-          <div class="frow">
-            <select class="ssel" id="filterEx" onchange="renderHistory()"><option value="">All</option></select>
-            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('filterEx').value='';renderHistory()">Clear</button>
-          </div>
-        </div>
+        <div class="card-head"><div class="card-label">WORKOUT HISTORY</div></div>
         <div id="wkHistory"></div>
       </div>
     </div>
@@ -834,75 +844,118 @@ async function updJob(id,f,v){jobApps.find(x=>x.id===id)[f]=v;syncing(true);awai
 async function delJob(id){syncing(true);await sb.from('job_apps').delete().eq('id',id);syncing(false);jobApps=jobApps.filter(a=>a.id!==id);renderJobs();}
 
 // ── IRON ──────────────────────────────────────────────────────────────────────
-let cardioMode=false;
-function toggleCardio(){
-  cardioMode=!cardioMode;
-  document.getElementById('workoutForm').style.display=cardioMode?'none':'grid';
-  document.getElementById('cardioForm').style.display=cardioMode?'grid':'none';
-  document.getElementById('cardioToggle').textContent=cardioMode?'⇄ Switch to Strength':'⇄ Switch to Cardio';
+const MG = [
+  {name:'Chest',    ico:'🫁'},
+  {name:'Back',     ico:'🏗️'},
+  {name:'Shoulders',ico:'🏋️'},
+  {name:'Biceps',   ico:'💪'},
+  {name:'Triceps',  ico:'🦾'},
+  {name:'Legs',     ico:'🦵'},
+  {name:'Core',     ico:'🎯'},
+  {name:'Cardio',   ico:'🏃'},
+];
+
+function buildDaylogGrid(){
+  document.getElementById('daylogGrid').innerHTML = MG.map(g=>`
+    <div class="dl-card" id="dlc-${g.name}" onclick="toggleDL('${g.name}')">
+      <div class="dl-check" id="dlck-${g.name}"></div>
+      <div class="dl-ico">${g.ico}</div>
+      <div class="dl-name">${g.name.toUpperCase()}</div>
+      <div class="dl-sets" id="dls-${g.name}" onclick="event.stopPropagation()">
+        <input type="number" id="dli-${g.name}" min="1" value="3"
+               placeholder="0" onclick="event.stopPropagation()">
+        <span class="dl-sets-lbl">${g.name==='Cardio'?'MILES':'SETS'}</span>
+      </div>
+    </div>`).join('');
 }
-function getGroup(n){for(const[g,l]of Object.entries(EXGROUPS))if(l.includes(n))return g;return'Other';}
-function loadPrev(){
-  const ex=document.getElementById('exSel').value,sn=parseInt(document.getElementById('setN').value)||1;
-  const prev=wkLog.filter(e=>e.exercise===ex&&e.setNum===sn&&!e.cardio);
-  document.getElementById('prevHint').textContent=prev.length?`↑ Last: ${prev[0].reps} reps @ ${prev[0].weight} lbs`:'No previous data';
+
+function toggleDL(name){
+  const card=document.getElementById('dlc-'+name);
+  const checked=card.classList.toggle('checked');
+  document.getElementById('dlck-'+name).textContent=checked?'✓':'';
+  const hint=document.getElementById('logDayHint');
+  const count=document.querySelectorAll('.dl-card.checked').length;
+  hint.textContent=count?count+' group'+(count>1?'s':'')+' selected':'Check muscles you trained';
+  if(checked)document.getElementById('dli-'+name).focus();
 }
-async function logSet(){
-  const exercise=document.getElementById('exSel').value;
-  const setNum=parseInt(document.getElementById('setN').value);
-  const reps=parseInt(document.getElementById('setR').value);
-  const weight=parseFloat(document.getElementById('setW').value)||0;
-  const date=document.getElementById('setD').value||today();
-  if(!reps){alert('Enter reps');return;}
-  const btn=document.getElementById('logSetBtn');btn.disabled=true;btn.textContent='...';
+
+async function logDay(){
+  const date=document.getElementById('wkDate').value||today();
+  const checked=[...document.querySelectorAll('.dl-card.checked')].map(c=>{
+    const name=c.id.replace('dlc-','');
+    const val=parseFloat(document.getElementById('dli-'+name).value)||0;
+    return{name,val};
+  }).filter(x=>x.val>0);
+  if(!checked.length){alert('Check at least one muscle group and enter sets.');return;}
+
+  const btn=document.getElementById('logDayBtn');btn.disabled=true;btn.textContent='LOGGING...';
   syncing(true);
-  const{data}=await sb.from('workout_log').insert({exercise,muscle_group:getGroup(exercise),set_num:setNum,reps,weight,date,cardio:false}).select().single();
-  syncing(false);btn.disabled=false;btn.textContent='LOG';
-  if(data)wkLog.unshift({...data,group:data.muscle_group,setNum:data.set_num});
-  document.getElementById('setN').value=setNum+1;
-  loadPrev();renderHistory();renderMuscle();
-}
-async function logCardio(){
-  const exercise=document.getElementById('cardioEx').value;
-  const miles=parseFloat(document.getElementById('cardioMi').value);
-  const date=document.getElementById('cardioD').value||today();
-  if(!miles){alert('Enter miles');return;}
-  const btn=document.getElementById('logCardBtn');btn.disabled=true;btn.textContent='...';
-  syncing(true);
-  const{data}=await sb.from('workout_log').insert({exercise,muscle_group:'Cardio',miles,date,cardio:true}).select().single();
-  syncing(false);btn.disabled=false;btn.textContent='LOG';
-  if(data)wkLog.unshift({...data,group:'Cardio'});
+
+  const rows=checked.map(({name,val})=>({
+    exercise:name,
+    muscle_group:name,
+    set_num:0,
+    reps:name==='Cardio'?0:val,
+    miles:name==='Cardio'?val:null,
+    weight:0,
+    date,
+    cardio:name==='Cardio',
+  }));
+  const{data}=await sb.from('workout_log').insert(rows).select();
+  syncing(false);btn.disabled=false;btn.textContent='LOG WORKOUT';
+
+  if(data)data.forEach(e=>wkLog.unshift({...e,group:e.muscle_group,setNum:0}));
+
+  // reset cards
+  document.querySelectorAll('.dl-card.checked').forEach(c=>{
+    const name=c.id.replace('dlc-','');
+    c.classList.remove('checked');
+    document.getElementById('dlck-'+name).textContent='';
+    document.getElementById('dli-'+name).value='3';
+  });
+  document.getElementById('logDayHint').textContent='Logged! ✓';
+  setTimeout(()=>document.getElementById('logDayHint').textContent='Check muscles you trained',2500);
   renderHistory();renderMuscle();
 }
-async function delWorkout(id){syncing(true);await sb.from('workout_log').delete().eq('id',id);syncing(false);wkLog=wkLog.filter(e=>e.id!==id);renderHistory();renderMuscle();}
+
+async function delWorkout(id){
+  syncing(true);await sb.from('workout_log').delete().eq('id',id);syncing(false);
+  wkLog=wkLog.filter(e=>e.id!==id);renderHistory();renderMuscle();
+}
+
 function renderMuscle(){
-  const groups=['Chest','Back','Shoulders','Biceps','Triceps','Legs','Core','Cardio'];
   const cut=new Date();cut.setDate(cut.getDate()-7);
   const recent=wkLog.filter(e=>new Date(e.date)>=cut);
-  document.getElementById('muscleGrid').innerHTML=groups.map(g=>{
-    const s=recent.filter(e=>(e.group||e.muscle_group)===g).length;
+  document.getElementById('muscleGrid').innerHTML=MG.map(({name})=>{
+    // sum sets: new entries (set_num=0) use reps as set count; old entries count as 1 each
+    const s=recent.filter(e=>(e.group||e.muscle_group)===name)
+      .reduce((sum,e)=>(e.set_num===0?sum+(e.reps||1):sum+1),0);
     const cls=s<5?'red':s<10?'amb':'good';
-    return`<div class="mc ${cls}"><div class="mc-lbl">${g.toUpperCase()}</div><div class="mc-num">${s}</div><div class="mc-bar-bg"><div class="mc-bar-fg" style="width:${Math.min(100,(s/10)*100)}%"></div></div><div class="mc-sub">${s}/10 sets</div></div>`;
+    return`<div class="mc ${cls}"><div class="mc-lbl">${name.toUpperCase()}</div><div class="mc-num">${s}</div><div class="mc-bar-bg"><div class="mc-bar-fg" style="width:${Math.min(100,(s/10)*100)}%"></div></div><div class="mc-sub">${s}/10 sets</div></div>`;
   }).join('');
 }
+
 function renderHistory(){
-  const filter=document.getElementById('filterEx').value;
-  const list=filter?wkLog.filter(e=>e.exercise===filter):wkLog;
   const el=document.getElementById('wkHistory');
-  if(!list.length){el.innerHTML='<div class="empty">No entries yet.</div>';return;}
-  el.innerHTML=`<table class="dt"><thead><tr><th>DATE</th><th>EXERCISE</th><th>GROUP</th><th>SET</th><th>REPS</th><th>WEIGHT</th><th>MILES</th><th></th></tr></thead>
-  <tbody>${list.slice(0,60).map(e=>`<tr>
-    <td style="font-family:var(--mono)">${e.date}</td><td>${e.exercise}</td>
-    <td style="font-family:var(--mono);font-size:10px;color:var(--muted)">${e.group||e.muscle_group}</td>
-    <td style="font-family:var(--mono)">${e.cardio?'—':e.setNum||e.set_num}</td>
-    <td style="font-family:var(--mono)">${e.cardio?'—':e.reps}</td>
-    <td style="font-family:var(--mono)">${e.cardio?'—':(e.weight||0)+' lbs'}</td>
-    <td style="font-family:var(--mono)">${e.cardio?e.miles+' mi':'—'}</td>
-    <td><button class="del" onclick="delWorkout('${e.id}')">✕</button></td>
-  </tr>`).join('')}</tbody></table>`;
-  const all=[...new Set(wkLog.map(e=>e.exercise))].sort();
-  const sel=document.getElementById('filterEx'),cur=sel.value;
-  sel.innerHTML='<option value="">All</option>'+all.map(e=>`<option ${e===cur?'selected':''}>${e}</option>`).join('');
+  if(!wkLog.length){el.innerHTML='<div class="empty">No entries yet.</div>';return;}
+  // group by date
+  const byDate={};
+  wkLog.forEach(e=>{if(!byDate[e.date])byDate[e.date]=[];byDate[e.date].push(e);});
+  const dates=Object.keys(byDate).sort((a,b)=>b.localeCompare(a)).slice(0,30);
+  el.innerHTML=dates.map(d=>{
+    const entries=byDate[d];
+    const tags=entries.map(e=>{
+      const sets=e.set_num===0?(e.cardio?e.miles+'mi':e.reps+'sets'):1;
+      return`<span style="display:inline-flex;align-items:center;gap:5px;background:var(--card);border:1px solid var(--border2);border-radius:8px;padding:4px 10px;font-size:12px;font-family:var(--mono);margin:3px">
+        ${MG.find(g=>g.name===(e.group||e.muscle_group))?.ico||''} ${(e.group||e.muscle_group)} <b style="color:var(--p2)">${sets}</b>
+        <button class="del" style="font-size:12px;padding:0 4px" onclick="delWorkout('${e.id}')">✕</button>
+      </span>`;
+    }).join('');
+    return`<div style="padding:14px 0;border-bottom:1px solid var(--border)">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:8px;letter-spacing:2px">${d}</div>
+      <div>${tags}</div>
+    </div>`;
+  }).join('')+'<div style="padding:14px 0;font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center">Showing last 30 days</div>';
 }
 
 // ── REST ──────────────────────────────────────────────────────────────────────
@@ -954,8 +1007,8 @@ const today=()=>new Date().toISOString().split('T')[0];
 // ── INIT ─────────────────────────────────────────────────────────────────────
 async function init(){
   document.getElementById('sleepDt').value=today();
-  document.getElementById('setD').value=today();
-  document.getElementById('cardioD').value=today();
+  document.getElementById('wkDate').value=today();
+  buildDaylogGrid();
   updateDays();
   try{await syncCloud();}catch(e){console.warn('offline',e);}
   renderLedger();renderExit();renderEdge();renderSleep();renderMuscle();renderHistory();
