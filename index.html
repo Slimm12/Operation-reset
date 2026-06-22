@@ -1080,7 +1080,6 @@ async function init(){
   document.getElementById('sleepDt').value=today();
   document.getElementById('setD').value=today();
   document.getElementById('customDate').value=today();
-  buildDaylogGrid();
   updateDays();
   try{await syncCloud();}catch(e){console.warn('offline',e);}
   renderLedger();renderExit();renderEdge();renderSleep();renderMuscle();renderHistory();
