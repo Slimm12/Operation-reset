@@ -544,14 +544,39 @@ table.dt tbody tr:hover td { background: var(--card2); }
         <div class="muscle-grid" id="muscleGrid"></div>
       </div>
       <div class="card">
-        <div class="card-head">
-          <div class="card-label">LOG TODAY'S WORKOUT</div>
-          <div class="fg" style="margin:0"><input type="date" id="wkDate" style="width:auto;padding:8px 12px;font-size:12px"></div>
+        <div class="card-head"><div class="card-label">LOG A SET</div></div>
+        <span class="toggle-lnk" id="customToggle" onclick="toggleCustom()">✏️ Type a custom exercise instead</span>
+        <div class="form-grid form-5" id="workoutForm">
+          <div class="fg">
+            <label>EXERCISE</label>
+            <select id="exSel" onchange="loadPrev()">
+              <optgroup label="CHEST"><option>Bench Press</option><option>Incline Dumbbell Press</option><option>Cable Fly</option><option>Push-Up</option></optgroup>
+              <optgroup label="BACK"><option>Pull-Up</option><option>Barbell Row</option><option>Lat Pulldown</option><option>Seated Cable Row</option></optgroup>
+              <optgroup label="SHOULDERS"><option>Overhead Press</option><option>Lateral Raise</option><option>Face Pull</option></optgroup>
+              <optgroup label="BICEPS"><option>Barbell Curl</option><option>Hammer Curl</option><option>Incline Dumbbell Curl</option></optgroup>
+              <optgroup label="TRICEPS"><option>Tricep Pushdown</option><option>Tricep Pulldown</option><option>Reverse Tricep Pulldown</option><option>Skull Crusher</option><option>Overhead Tricep Extension</option></optgroup>
+              <optgroup label="LEGS"><option>Squat</option><option>Romanian Deadlift</option><option>Leg Press</option><option>Leg Curl</option><option>Calf Raise</option></optgroup>
+              <optgroup label="CORE"><option>Plank</option><option>Ab Wheel Rollout</option><option>Hanging Leg Raise</option></optgroup>
+              <optgroup label="CARDIO"><option>Running</option><option>Treadmill</option><option>Cycling</option><option>Stairmaster</option></optgroup>
+            </select>
+            <div class="prev-hint" id="prevHint"></div>
+          </div>
+          <div class="fg"><label>SET #</label><input type="number" id="setN" min="1" value="1" onchange="loadPrev()"></div>
+          <div class="fg"><label>REPS</label><input type="number" id="setR" min="1"></div>
+          <div class="fg"><label>WEIGHT LBS</label><input type="number" id="setW" min="0"></div>
+          <div class="fg"><label>DATE</label><input type="date" id="setD"></div>
+          <div style="padding-top:24px"><button class="btn" id="logSetBtn" onclick="logSet()">LOG</button></div>
         </div>
-        <div class="daylog-grid" id="daylogGrid"></div>
-        <div style="margin-top:20px;display:flex;gap:12px;align-items:center">
-          <button class="btn" id="logDayBtn" onclick="logDay()">LOG WORKOUT</button>
-          <span style="font-family:var(--mono);font-size:11px;color:var(--muted)" id="logDayHint">Check muscles you trained</span>
+        <div class="form-grid form-5" id="customForm" style="display:none">
+          <div class="fg" style="grid-column:span 2">
+            <label>EXERCISE NAME</label>
+            <input type="text" id="customEx" placeholder="e.g. Spider Curl, Nordic Curl…">
+          </div>
+          <div class="fg"><label>SET #</label><input type="number" id="customSetN" min="1" value="1"></div>
+          <div class="fg"><label>REPS</label><input type="number" id="customReps" min="1"></div>
+          <div class="fg"><label>WEIGHT LBS</label><input type="number" id="customWeight" min="0"></div>
+          <div class="fg"><label>DATE</label><input type="date" id="customDate"></div>
+          <div style="padding-top:24px"><button class="btn" id="logCustomBtn" onclick="logCustom()">LOG</button></div>
         </div>
       </div>
       <div class="card">
@@ -844,6 +869,52 @@ async function updJob(id,f,v){jobApps.find(x=>x.id===id)[f]=v;syncing(true);awai
 async function delJob(id){syncing(true);await sb.from('job_apps').delete().eq('id',id);syncing(false);jobApps=jobApps.filter(a=>a.id!==id);renderJobs();}
 
 // ── IRON ──────────────────────────────────────────────────────────────────────
+let customMode=false;
+function toggleCustom(){
+  customMode=!customMode;
+  document.getElementById('workoutForm').style.display=customMode?'none':'grid';
+  document.getElementById('customForm').style.display=customMode?'grid':'none';
+  document.getElementById('customToggle').textContent=customMode?'← Back to exercise list':'✏️ Type a custom exercise instead';
+  if(customMode)document.getElementById('customDate').value=today();
+}
+function getGroup(n){for(const[g,l]of Object.entries(EXGROUPS))if(l.includes(n))return g;return'Other';}
+function loadPrev(){
+  const ex=document.getElementById('exSel').value,sn=parseInt(document.getElementById('setN').value)||1;
+  const prev=wkLog.filter(e=>e.exercise===ex&&(e.set_num||e.setNum)===sn&&!e.cardio);
+  document.getElementById('prevHint').textContent=prev.length?`↑ Last: ${prev[0].reps} reps @ ${prev[0].weight||0} lbs`:'No previous data';
+}
+async function logSet(){
+  const exercise=document.getElementById('exSel').value;
+  const setNum=parseInt(document.getElementById('setN').value);
+  const reps=parseInt(document.getElementById('setR').value);
+  const weight=parseFloat(document.getElementById('setW').value)||0;
+  const date=document.getElementById('setD').value||today();
+  if(!reps){alert('Enter reps');return;}
+  const btn=document.getElementById('logSetBtn');btn.disabled=true;btn.textContent='...';
+  syncing(true);
+  const{data}=await sb.from('workout_log').insert({exercise,muscle_group:getGroup(exercise),set_num:setNum,reps,weight,date,cardio:false}).select().single();
+  syncing(false);btn.disabled=false;btn.textContent='LOG';
+  if(data)wkLog.unshift({...data,group:data.muscle_group,setNum:data.set_num});
+  document.getElementById('setN').value=setNum+1;
+  loadPrev();renderHistory();renderMuscle();
+}
+async function logCustom(){
+  const exercise=document.getElementById('customEx').value.trim();
+  const setNum=parseInt(document.getElementById('customSetN').value)||1;
+  const reps=parseInt(document.getElementById('customReps').value);
+  const weight=parseFloat(document.getElementById('customWeight').value)||0;
+  const date=document.getElementById('customDate').value||today();
+  if(!exercise){alert('Enter an exercise name');return;}
+  if(!reps){alert('Enter reps');return;}
+  const btn=document.getElementById('logCustomBtn');btn.disabled=true;btn.textContent='...';
+  syncing(true);
+  const{data}=await sb.from('workout_log').insert({exercise,muscle_group:'Custom',set_num:setNum,reps,weight,date,cardio:false}).select().single();
+  syncing(false);btn.disabled=false;btn.textContent='LOG';
+  if(data)wkLog.unshift({...data,group:'Custom',setNum:data.set_num});
+  document.getElementById('customSetN').value=setNum+1;
+  renderHistory();renderMuscle();
+}
+
 const MG = [
   {name:'Chest',    ico:'🫁'},
   {name:'Back',     ico:'🏗️'},
@@ -1007,7 +1078,8 @@ const today=()=>new Date().toISOString().split('T')[0];
 // ── INIT ─────────────────────────────────────────────────────────────────────
 async function init(){
   document.getElementById('sleepDt').value=today();
-  document.getElementById('wkDate').value=today();
+  document.getElementById('setD').value=today();
+  document.getElementById('customDate').value=today();
   buildDaylogGrid();
   updateDays();
   try{await syncCloud();}catch(e){console.warn('offline',e);}
