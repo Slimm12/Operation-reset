@@ -427,6 +427,47 @@ table.dt tbody tr:hover td { background: var(--card2); }
   .hero-icon { display: none; }
   .sleep-stats { grid-template-columns: 1fr; }
 }
+/* ─── DAILY TASKS ────────────────────────────────────────────────────────── */
+.task-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px; border-radius: 12px;
+  background: var(--card2); border: 1px solid var(--border);
+  margin-bottom: 8px; transition: all 0.2s;
+}
+.task-item.overdue { border-color: var(--r); background: #f43f5e12; }
+.task-item.done { opacity: 0.45; }
+.task-time { font-family: var(--mono); font-size: 12px; color: var(--muted); min-width: 44px; }
+.task-item.overdue .task-time { color: var(--r); font-weight: 600; }
+.task-text { flex: 1; font-size: 14px; font-weight: 500; }
+.task-item.done .task-text { text-decoration: line-through; }
+.task-check {
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 2px solid var(--border2); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; transition: all 0.15s; flex-shrink: 0;
+}
+.task-item.done .task-check { background: var(--g); border-color: var(--g); color: #000; }
+.task-item.overdue .task-check { border-color: var(--r); }
+.task-add-row { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; margin-top: 16px; align-items: end; }
+/* ─── RANK PAGE ──────────────────────────────────────────────────────────── */
+.rank-pg-top {
+  display: flex; align-items: center; gap: 40px; padding: 32px;
+  background: linear-gradient(135deg,#1a0d40 0%,#0f172a 50%,#0a1a30 100%);
+  border-radius: 20px; margin-bottom: 18px; position: relative; overflow: hidden;
+}
+.rank-pg-top::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse 60% 80% at 80% 50%,#7c5cfc18 0%,transparent 70%); pointer-events:none; }
+.rank-pg-ring { position: relative; flex-shrink: 0; }
+.rank-pg-info { flex: 1; position: relative; }
+.rank-pg-eyebrow { font-family: var(--mono); font-size: 10px; letter-spacing: 3px; color: var(--p2); margin-bottom: 8px; }
+.rank-pg-name { font-size: 48px; font-weight: 800; line-height: 1; margin-bottom: 8px; background: linear-gradient(90deg,#fff 30%,var(--p2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+.rank-pg-xp { font-family: var(--mono); font-size: 13px; color: var(--muted2); margin-bottom: 6px; }
+.rank-pg-next { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.rank-ring-center { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; pointer-events:none; }
+.rank-ring-pct { font-family:var(--mono); font-size:20px; font-weight:500; color:var(--text); line-height:1; }
+.rank-ring-lbl { font-family:var(--mono); font-size:8px; color:var(--muted); letter-spacing:2px; margin-top:4px; }
+.xp-chip { cursor: pointer; }
+.xp-chip:hover .xp-chip-rank { color: var(--p); }
+@media (max-width:768px) { .rank-pg-top { flex-direction:column; align-items:flex-start; } .rank-hero-icon { display:none; } }
 </style>
 </head>
 <body>
@@ -472,7 +513,7 @@ table.dt tbody tr:hover td { background: var(--card2); }
     </div>
     <div class="topbar-right">
       <div class="days-chip" id="daysChip">-- days left</div>
-      <div class="xp-chip">
+      <div class="xp-chip" onclick="go('rank')">
         <svg width="28" height="28" viewBox="0 0 28 28">
           <circle class="xp-ring-bg" cx="14" cy="14" r="12"/>
           <circle class="xp-ring" id="xpRing" cx="14" cy="14" r="12"/>
@@ -487,19 +528,48 @@ table.dt tbody tr:hover td { background: var(--card2); }
 
     <!-- HQ -->
     <div class="sec on" id="sec-hq">
-      <div class="hero">
-        <div class="hero-grid">
-          <div>
-            <div class="hero-eyebrow">CURRENT RANK</div>
-            <div class="hero-rank" id="heroRank">Recruit</div>
-            <div class="hero-xp-line" id="heroXPLine">0 XP earned</div>
-            <div class="hero-bar-wrap"><div class="hero-bar" id="heroBar" style="width:0%"></div></div>
-            <div class="hero-next" id="heroNext">100 XP to Private</div>
-          </div>
-          <div class="hero-icon" id="heroIcon">🪖</div>
+      <div class="bento" id="bentoCont"></div>
+      <div class="card">
+        <div class="card-head">
+          <div class="card-label">TODAY'S TASKS</div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--muted)" id="taskClock"></div>
+        </div>
+        <div id="taskList"></div>
+        <div class="task-add-row">
+          <div class="fg" style="margin:0"><input type="text" id="taskText" placeholder="Task name…"></div>
+          <div class="fg" style="margin:0"><input type="time" id="taskTime"></div>
+          <button class="btn btn-sm" onclick="addTask()">+ ADD</button>
         </div>
       </div>
-      <div class="bento" id="bentoCont"></div>
+    </div>
+
+    <!-- RANK -->
+    <div class="sec" id="sec-rank">
+      <div class="pg-head">
+        <div class="pg-tag">PROFILE</div>
+        <div class="pg-title">Your <em>Rank</em></div>
+      </div>
+      <div class="rank-pg-top">
+        <div class="rank-pg-ring">
+          <svg width="160" height="160" viewBox="0 0 160 160">
+            <circle cx="80" cy="80" r="70" fill="none" stroke="#ffffff08" stroke-width="12"/>
+            <circle id="rankRing" cx="80" cy="80" r="70" fill="none" stroke="var(--p)" stroke-width="12"
+              stroke-linecap="round" stroke-dasharray="439.8" stroke-dashoffset="439.8"
+              transform="rotate(-90 80 80)" style="transition:stroke-dashoffset 1s ease"/>
+          </svg>
+          <div class="rank-ring-center">
+            <div class="rank-ring-pct" id="rankPct">0%</div>
+            <div class="rank-ring-lbl">TO NEXT</div>
+          </div>
+        </div>
+        <div class="rank-pg-info">
+          <div class="rank-pg-eyebrow">CURRENT RANK</div>
+          <div class="rank-pg-name" id="rankPgName">Recruit</div>
+          <div class="rank-pg-xp" id="rankPgXP">0 XP earned</div>
+          <div class="rank-pg-next" id="rankPgNext">400 XP to Private</div>
+        </div>
+        <div class="rank-hero-icon" id="rankIcon" style="font-size:64px;position:relative">🪖</div>
+      </div>
       <div class="card">
         <div class="card-head"><div class="card-label">RANK PROGRESSION</div></div>
         <div class="rank-row-list" id="rankList"></div>
@@ -857,14 +927,18 @@ function updateXP(){
   const pct=nx?((xp-r.xp)/(nx.xp-r.xp))*100:100;
   const off=75.4-(pct/100)*75.4;
 
-  document.getElementById('heroRank').textContent=r.name;
-  document.getElementById('heroXPLine').textContent=xp+' XP earned';
-  document.getElementById('heroBar').style.width=Math.min(100,pct)+'%';
-  document.getElementById('heroNext').textContent=nx?(nx.xp-xp)+' XP to '+nx.name:'MAX RANK ACHIEVED';
-  document.getElementById('heroIcon').textContent=r.icon;
+  // topbar chip
   document.getElementById('tbRank').textContent=r.name;
   document.getElementById('tbXP').textContent=xp+' XP';
   document.getElementById('xpRing').style.strokeDashoffset=off;
+
+  // rank page
+  document.getElementById('rankPgName').textContent=r.name;
+  document.getElementById('rankPgXP').textContent=xp.toLocaleString()+' XP earned';
+  document.getElementById('rankPgNext').textContent=nx?(nx.xp-xp).toLocaleString()+' XP to '+nx.name:'MAX RANK ACHIEVED';
+  document.getElementById('rankIcon').textContent=r.icon;
+  document.getElementById('rankPct').textContent=Math.round(pct)+'%';
+  document.getElementById('rankRing').style.strokeDashoffset=439.8*(1-pct/100);
 
   document.getElementById('rankList').innerHTML=RANKS.map((rk,i)=>`
     <div class="rr ${i===ri?'now':''} ${i<ri?'past':''}">
@@ -881,14 +955,14 @@ function updateDays(){
 }
 
 // ── NAV ──────────────────────────────────────────────────────────────────────
-const TITLES={hq:['COMMAND CENTER','HQ Dashboard'],ledger:['SECTION 01','The Ledger'],exit:['SECTION 02','The Exit'],iron:['SECTION 03','The Iron'],rest:['SECTION 04','The Rest'],edge:['SECTION 05','The Edge']};
+const TITLES={hq:['COMMAND CENTER','HQ Dashboard'],rank:['PROFILE','Rank & XP'],ledger:['SECTION 01','The Ledger'],exit:['SECTION 02','The Exit'],iron:['SECTION 03','The Iron'],rest:['SECTION 04','The Rest'],edge:['SECTION 05','The Edge']};
 function go(id,el,mobId){
   document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
   document.querySelectorAll('.nav-ico').forEach(n=>n.classList.remove('on'));
   document.querySelectorAll('.mob-btn').forEach(n=>n.classList.remove('on'));
   document.getElementById('sec-'+id).classList.add('on');
-  (el||document.getElementById('n-'+id)).classList.add('on');
-  document.getElementById(mobId||'m-'+id).classList.add('on');
+  const navEl=el||document.getElementById('n-'+id);if(navEl)navEl.classList.add('on');
+  const mobEl=document.getElementById(mobId||'m-'+id);if(mobEl)mobEl.classList.add('on');
   const[sec,tit]=TITLES[id]||['',''];
   document.getElementById('tbSection').textContent=sec;
   document.getElementById('tbTitle').textContent=tit;
@@ -1217,6 +1291,55 @@ function renderSleep(){
   </tr>`).join('');
 }
 
+// ── DAILY TASKS ───────────────────────────────────────────────────────────────
+let dailyTasks=[];
+const taskKey=()=>'tasks_'+today();
+async function loadTasks(){
+  try{
+    const{data}=await sb.from('settings').select('value').eq('key',taskKey()).maybeSingle();
+    dailyTasks=data?JSON.parse(data.value):[];
+  }catch(e){dailyTasks=[];}
+  renderTasks();
+}
+async function saveTasks(){syncing(true);await sb.from('settings').upsert({key:taskKey(),value:JSON.stringify(dailyTasks)});syncing(false);}
+async function addTask(){
+  const text=document.getElementById('taskText').value.trim();
+  const time=document.getElementById('taskTime').value;
+  if(!text||!time){alert('Enter a task name and time');return;}
+  dailyTasks.push({id:Date.now().toString(),text,time,done:false});
+  dailyTasks.sort((a,b)=>a.time.localeCompare(b.time));
+  document.getElementById('taskText').value='';
+  document.getElementById('taskTime').value='';
+  await saveTasks();renderTasks();
+}
+async function toggleTask(id){
+  const t=dailyTasks.find(t=>t.id===id);
+  if(t){t.done=!t.done;await saveTasks();renderTasks();}
+}
+async function deleteTask(id){
+  dailyTasks=dailyTasks.filter(t=>t.id!==id);
+  await saveTasks();renderTasks();
+}
+function renderTasks(){
+  const el=document.getElementById('taskList');if(!el)return;
+  const now=new Date();
+  const cur=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const clk=document.getElementById('taskClock');
+  if(clk)clk.textContent=now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  if(!dailyTasks.length){el.innerHTML='<div class="empty">No tasks yet. Add one below.</div>';return;}
+  el.innerHTML=dailyTasks.map(t=>{
+    const overdue=!t.done&&t.time<cur;
+    const cls=t.done?'done':overdue?'overdue':'';
+    const fmt=new Date('2000-01-01T'+t.time).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+    return`<div class="task-item ${cls}">
+      <span class="task-time">${fmt}</span>
+      <span class="task-text">${t.text}</span>
+      <div class="task-check" onclick="toggleTask('${t.id}')">${t.done?'✓':''}</div>
+      <button class="del" onclick="deleteTask('${t.id}')">✕</button>
+    </div>`;
+  }).join('');
+}
+
 // ── EDGE ──────────────────────────────────────────────────────────────────────
 function renderEdge(){renderObjs('edgeObjs',edgeObjs,'edge','edgePill');}
 
@@ -1232,6 +1355,8 @@ async function init(){
   try{await syncCloud();}catch(e){console.warn('offline',e);}
   renderLedger();renderExit();renderEdge();renderSleep();renderDayView();
   updateXP();
+  await loadTasks();
+  setInterval(renderTasks,60000);
   document.getElementById('loadingOverlay').classList.add('hidden');
 }
 init();
