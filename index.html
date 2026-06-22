@@ -1227,7 +1227,7 @@ function renderSleep(){
 function renderEdge(){renderObjs('edgeObjs',edgeObjs,'edge','edgePill');}
 
 // ── UTILS ─────────────────────────────────────────────────────────────────────
-const today=()=>new Date().toISOString().split('T')[0];
+function today(){return new Date().toISOString().split('T')[0];}
 
 // ── INIT ─────────────────────────────────────────────────────────────────────
 async function init(){
