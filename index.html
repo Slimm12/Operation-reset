@@ -1236,7 +1236,6 @@ async function init(){
   document.getElementById('customDate').value=today();
   updateDays();
   try{await syncCloud();}catch(e){console.warn('offline',e);}
-  document.getElementById('viewDate').value=today();
   renderLedger();renderExit();renderEdge();renderSleep();renderDayView();
   updateXP();
   document.getElementById('loadingOverlay').classList.add('hidden');
