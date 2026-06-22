@@ -622,6 +622,13 @@ table.dt tbody tr:hover td { background: var(--card2); }
                 <div class="rl-val"><span id="rMusclesVal">0</span> <span class="rl-goal">/ 4</span></div>
               </div>
             </div>
+            <div class="ring-legend" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+              <div class="rl-dot" style="background:var(--o)"></div>
+              <div>
+                <div class="rl-label">XP EARNED</div>
+                <div class="rl-val"><span id="ironXPVal">0</span> <span class="rl-goal">XP</span></div>
+              </div>
+            </div>
             <div style="margin-top:20px" id="stepsInputWrap">
               <div class="card-label" style="margin-bottom:8px">LOG STEPS</div>
               <div style="display:flex;gap:10px;align-items:center">
@@ -1062,6 +1069,7 @@ function renderRings(){
   document.getElementById('rStepsVal').textContent=steps.toLocaleString();
   document.getElementById('rSetsVal').textContent=totalSets;
   document.getElementById('rMusclesVal').textContent=muscles;
+  document.getElementById('ironXPVal').textContent=wkLog.length*5;
   if(stepsData[viewDay])document.getElementById('stepsInput').value=stepsData[viewDay];
   else document.getElementById('stepsInput').value='';
 
