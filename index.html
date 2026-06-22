@@ -794,12 +794,7 @@ const D_LED=[
 ];
 const D_EXIT=[
   {id:1,name:'Rewrite resume for remote fraud/AML roles',cat:'Resume',xp:75,done:false},
-  {id:2,name:'Apply to Lead #1',cat:'Job App',xp:10,done:false},
-  {id:3,name:'Apply to Lead #2',cat:'Job App',xp:10,done:false},
-  {id:4,name:'Apply to Lead #3',cat:'Job App',xp:10,done:false},
-  {id:5,name:'Apply to Lead #4',cat:'Job App',xp:10,done:false},
-  {id:6,name:'Apply to Lead #5',cat:'Job App',xp:10,done:false},
-  {id:7,name:'Land first interview',cat:'Interview',xp:100,done:false},
+  {id:2,name:'Land first interview',cat:'Interview',xp:100,done:false},
   {id:8,name:'Pass to final round',cat:'Interview',xp:150,done:false},
   {id:9,name:'Receive job offer',cat:'Offer',xp:300,done:false},
   {id:10,name:'Register for CAMS exam',cat:'Cert',xp:50,done:false},
@@ -847,7 +842,7 @@ async function syncCloud(){
 }
 
 // ── XP / RANK ─────────────────────────────────────────────────────────────────
-const totalXP=()=>[...ledObjs,...exitObjs,...edgeObjs].filter(o=>o.done).reduce((s,o)=>s+o.xp,0)+(jobApps.length*10);
+const totalXP=()=>[...ledObjs,...exitObjs,...edgeObjs].filter(o=>o.done).reduce((s,o)=>s+o.xp,0)+(jobApps.length*5);
 function rankIdx(xp){for(let i=RANKS.length-1;i>=0;i--)if(xp>=RANKS[i].xp)return i;return 0;}
 
 function updateXP(){
