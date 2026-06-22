@@ -336,9 +336,29 @@ table.dt tbody tr:hover td { background: var(--card2); }
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
 
+/* ─── MOBILE NAV BAR ─────────────────────────────────────────────────────── */
+.mobile-nav {
+  display: none;
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+  background: #0d0f1c; border-top: 1px solid var(--border);
+  padding: 8px 0 env(safe-area-inset-bottom, 8px);
+}
+.mobile-nav-inner { display: flex; justify-content: space-around; }
+.mob-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 6px 12px; border-radius: 12px; cursor: pointer;
+  transition: all 0.15s; font-size: 10px; font-family: var(--mono);
+  color: var(--muted); letter-spacing: 1px; border: none; background: none;
+}
+.mob-btn .mob-ico { font-size: 20px; line-height: 1; }
+.mob-btn.on { color: var(--p2); }
+.mob-btn.on .mob-ico { filter: drop-shadow(0 0 6px var(--p)); }
+
 @media (max-width: 768px) {
   :root { --sidebar: 0px; }
   .sidenav { display: none; }
+  .mobile-nav { display: block; }
+  .main { padding-bottom: 72px; }
   .content { padding: 16px; }
   .topbar { padding: 0 16px; }
   .bento { grid-template-columns: 1fr 1fr; }
@@ -370,6 +390,18 @@ table.dt tbody tr:hover td { background: var(--card2); }
   <div class="nav-ico" id="n-edge"   onclick="go('edge',this)">📈<span class="tip">The Edge</span></div>
   <div class="sidenav-bottom">
     <div class="sync-ico" id="syncDot"></div>
+  </div>
+</nav>
+
+<!-- MOBILE BOTTOM NAV -->
+<nav class="mobile-nav">
+  <div class="mobile-nav-inner">
+    <button class="mob-btn on" id="m-hq"     onclick="go('hq',null,'m-hq')"><span class="mob-ico">⬡</span>HQ</button>
+    <button class="mob-btn"    id="m-ledger" onclick="go('ledger',null,'m-ledger')"><span class="mob-ico">📒</span>LEDGER</button>
+    <button class="mob-btn"    id="m-exit"   onclick="go('exit',null,'m-exit')"><span class="mob-ico">🚪</span>EXIT</button>
+    <button class="mob-btn"    id="m-iron"   onclick="go('iron',null,'m-iron')"><span class="mob-ico">🏋️</span>IRON</button>
+    <button class="mob-btn"    id="m-rest"   onclick="go('rest',null,'m-rest')"><span class="mob-ico">😴</span>REST</button>
+    <button class="mob-btn"    id="m-edge"   onclick="go('edge',null,'m-edge')"><span class="mob-ico">📈</span>EDGE</button>
   </div>
 </nav>
 
@@ -687,14 +719,17 @@ function updateDays(){
 
 // ── NAV ──────────────────────────────────────────────────────────────────────
 const TITLES={hq:['COMMAND CENTER','HQ Dashboard'],ledger:['SECTION 01','The Ledger'],exit:['SECTION 02','The Exit'],iron:['SECTION 03','The Iron'],rest:['SECTION 04','The Rest'],edge:['SECTION 05','The Edge']};
-function go(id,el){
+function go(id,el,mobId){
   document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
   document.querySelectorAll('.nav-ico').forEach(n=>n.classList.remove('on'));
+  document.querySelectorAll('.mob-btn').forEach(n=>n.classList.remove('on'));
   document.getElementById('sec-'+id).classList.add('on');
   (el||document.getElementById('n-'+id)).classList.add('on');
+  document.getElementById(mobId||'m-'+id).classList.add('on');
   const[sec,tit]=TITLES[id]||['',''];
   document.getElementById('tbSection').textContent=sec;
   document.getElementById('tbTitle').textContent=tit;
+  window.scrollTo(0,0);
 }
 
 // ── BENTO ─────────────────────────────────────────────────────────────────────
