@@ -3,415 +3,556 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OPERATION RESET — HQ</title>
+<title>OPERATION RESET</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #0a0c10;
-    --surface: #111419;
-    --surface2: #181d25;
-    --border: #1e2530;
-    --accent: #00d4ff;
-    --accent2: #00ff88;
-    --warn: #ffb800;
-    --danger: #ff4444;
-    --text: #e8eaf0;
-    --muted: #6b7585;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+:root {
+  --bg: #07090f;
+  --surface: #0e1118;
+  --surface2: #141820;
+  --surface3: #1a2030;
+  --border: #1f2736;
+  --border2: #263040;
+  --accent: #00c8f0;
+  --accent-glow: rgba(0,200,240,0.15);
+  --accent2: #00e87a;
+  --accent2-glow: rgba(0,232,122,0.12);
+  --warn: #f0a500;
+  --warn-glow: rgba(240,165,0,0.12);
+  --danger: #f04060;
+  --text: #dde2ec;
+  --text2: #8a96a8;
+  --text3: #4a5568;
+  --sidebar-w: 240px;
+  --font: 'Space Grotesk', system-ui, sans-serif;
+  --mono: 'Space Mono', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; display: flex; }
 
-  /* LOADING OVERLAY */
-  #loadingOverlay {
-    position: fixed; inset: 0; background: var(--bg);
-    display: flex; align-items: center; justify-content: center;
-    z-index: 9999; flex-direction: column; gap: 16px;
-  }
-  #loadingOverlay.hidden { display: none; }
-  .loader { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .loader-text { font-size: 12px; letter-spacing: 3px; color: var(--muted); }
+/* ── LOADING ── */
+#loadingOverlay { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 9999; flex-direction: column; gap: 20px; }
+#loadingOverlay.hidden { display: none; }
+.loader { width: 36px; height: 36px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loader-text { font-family: var(--mono); font-size: 11px; letter-spacing: 4px; color: var(--text3); }
 
-  /* TOP BAR */
-  .topbar {
-    background: var(--surface); border-bottom: 1px solid var(--border);
-    padding: 0 32px; display: flex; align-items: center;
-    justify-content: space-between; height: 64px;
-    position: sticky; top: 0; z-index: 100;
-  }
-  .topbar-left { display: flex; align-items: center; gap: 20px; }
-  .logo { font-size: 13px; font-weight: 700; letter-spacing: 3px; color: var(--accent); }
-  .logo span { color: var(--muted); }
-  .rank-badge {
-    background: linear-gradient(135deg, #0d1520, #162030);
-    border: 1px solid var(--accent); border-radius: 6px;
-    padding: 6px 14px; font-size: 11px; font-weight: 700;
-    letter-spacing: 2px; color: var(--accent);
-  }
-  .topbar-right { display: flex; align-items: center; gap: 24px; }
-  .xp-block { text-align: right; }
-  .xp-label { font-size: 10px; color: var(--muted); letter-spacing: 1px; margin-bottom: 4px; }
-  .xp-bar-wrap { width: 160px; height: 6px; background: var(--border); border-radius: 3px; }
-  .xp-bar { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 3px; transition: width 0.5s; }
-  .xp-nums { font-size: 11px; color: var(--text); margin-top: 3px; text-align: right; }
-  .days-badge { background: var(--surface2); border: 1px solid var(--warn); border-radius: 6px; padding: 6px 12px; text-align: center; }
-  .days-num { font-size: 20px; font-weight: 700; color: var(--warn); line-height: 1; }
-  .days-lbl { font-size: 9px; color: var(--muted); letter-spacing: 1px; }
+/* ── SIDEBAR ── */
+.sidebar {
+  width: var(--sidebar-w); background: var(--surface); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh;
+  z-index: 50; overflow-y: auto;
+}
+.sidebar-top { padding: 28px 20px 20px; border-bottom: 1px solid var(--border); }
+.logo-text { font-family: var(--mono); font-size: 11px; letter-spacing: 4px; color: var(--accent); font-weight: 700; }
+.logo-sub  { font-size: 10px; color: var(--text3); letter-spacing: 2px; margin-top: 2px; }
 
-  /* NAV */
-  .nav { display: flex; border-bottom: 1px solid var(--border); background: var(--surface); padding: 0 32px; overflow-x: auto; }
-  .nav-btn { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 12px; font-weight: 600; letter-spacing: 1.5px; padding: 14px 20px; border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap; }
-  .nav-btn:hover { color: var(--text); }
-  .nav-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+.rank-card {
+  margin: 16px 12px; background: linear-gradient(135deg, #0a1825 0%, #0d2030 100%);
+  border: 1px solid var(--accent); border-radius: 12px; padding: 16px;
+}
+.rank-icon-big { font-size: 32px; margin-bottom: 8px; }
+.rank-name { font-family: var(--mono); font-size: 12px; letter-spacing: 2px; color: var(--accent); font-weight: 700; }
+.rank-xp-text { font-size: 11px; color: var(--text2); margin-top: 2px; margin-bottom: 10px; }
+.rank-bar-wrap { height: 4px; background: var(--border2); border-radius: 2px; }
+.rank-bar { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 2px; transition: width 0.6s cubic-bezier(.4,0,.2,1); }
+.rank-next-text { font-size: 10px; color: var(--text3); margin-top: 6px; }
 
-  /* MAIN */
-  .main { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
-  .section { display: none; }
-  .section.active { display: block; }
+.nav-section { padding: 8px 12px 4px; }
+.nav-label { font-size: 9px; letter-spacing: 2px; color: var(--text3); font-weight: 600; padding: 0 8px; margin-bottom: 4px; }
+.nav-btn {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  background: none; border: none; color: var(--text2); cursor: pointer;
+  padding: 10px 12px; border-radius: 8px; font-family: var(--font);
+  font-size: 13px; font-weight: 500; transition: all 0.15s; text-align: left;
+}
+.nav-btn:hover { background: var(--surface2); color: var(--text); }
+.nav-btn.active { background: var(--accent-glow); color: var(--accent); }
+.nav-btn .nav-icon { font-size: 16px; width: 20px; flex-shrink: 0; }
+.nav-btn .nav-badge { margin-left: auto; font-size: 10px; font-family: var(--mono); color: var(--accent2); }
 
-  /* CARDS */
-  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 20px; }
-  .card-title { font-size: 11px; font-weight: 700; letter-spacing: 2px; color: var(--muted); margin-bottom: 16px; text-transform: uppercase; display: flex; align-items: center; justify-content: space-between; }
-  .card-title .pill { font-size: 10px; padding: 2px 8px; border-radius: 20px; background: var(--surface2); color: var(--muted); }
+.sidebar-bottom { margin-top: auto; padding: 16px 20px; border-top: 1px solid var(--border); }
+.days-block { text-align: center; }
+.days-number { font-family: var(--mono); font-size: 36px; font-weight: 700; color: var(--warn); line-height: 1; }
+.days-label  { font-size: 10px; letter-spacing: 2px; color: var(--text3); margin-top: 4px; }
+.days-sublabel { font-size: 10px; color: var(--text3); margin-top: 2px; }
 
-  /* OBJECTIVES */
-  .obj-list { display: flex; flex-direction: column; gap: 8px; }
-  .obj-item { display: flex; align-items: center; gap: 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; cursor: pointer; transition: all 0.15s; }
-  .obj-item:hover { border-color: var(--accent); }
-  .obj-item.done { opacity: 0.5; }
-  .obj-item.done .obj-name { text-decoration: line-through; }
-  .obj-check { width: 18px; height: 18px; border-radius: 4px; border: 2px solid var(--muted); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; transition: all 0.15s; }
-  .obj-item.done .obj-check { background: var(--accent2); border-color: var(--accent2); color: #000; }
-  .obj-name { flex: 1; font-size: 14px; }
-  .obj-xp { font-size: 11px; font-weight: 700; color: var(--accent); margin-left: auto; white-space: nowrap; }
+.sync-row { display: flex; align-items: center; gap: 6px; margin-top: 12px; justify-content: center; }
+.sync-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent2); }
+.sync-dot.syncing { background: var(--warn); animation: pulse 1s infinite; }
+@keyframes pulse { 0%,100%{opacity:1}50%{opacity:.3} }
+.sync-text { font-size: 10px; color: var(--text3); letter-spacing: 1px; }
 
-  /* SAVINGS */
-  .savings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
-  .savings-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
-  .savings-label { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
-  .savings-amount { font-size: 22px; font-weight: 700; color: var(--accent2); margin-bottom: 8px; }
-  .savings-bar-wrap { height: 4px; background: var(--border); border-radius: 2px; }
-  .savings-bar { height: 100%; background: var(--accent2); border-radius: 2px; transition: width 0.5s; }
-  .savings-target { font-size: 10px; color: var(--muted); margin-top: 4px; }
+/* ── MAIN ── */
+.main { margin-left: var(--sidebar-w); flex: 1; min-height: 100vh; }
 
-  /* FORMS */
-  .sleep-form { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap: 12px; align-items: end; margin-bottom: 20px; }
-  .form-group label { display: block; font-size: 10px; color: var(--muted); letter-spacing: 1px; margin-bottom: 6px; }
-  .form-group input, .form-group select { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 10px 12px; font-size: 13px; outline: none; transition: border-color 0.15s; }
-  .form-group input:focus, .form-group select:focus { border-color: var(--accent); }
-  .btn { background: var(--accent); color: #000; border: none; border-radius: 6px; padding: 10px 20px; font-size: 12px; font-weight: 700; letter-spacing: 1px; cursor: pointer; transition: opacity 0.15s; white-space: nowrap; }
-  .btn:hover { opacity: 0.85; }
-  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
-  .btn-ghost { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+/* TOP BAR */
+.topbar {
+  position: sticky; top: 0; z-index: 40;
+  background: rgba(7,9,15,0.85); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px; height: 60px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.topbar-title { font-size: 15px; font-weight: 600; color: var(--text); }
+.topbar-right { display: flex; align-items: center; gap: 16px; }
+.xp-pill {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 20px; padding: 6px 14px;
+}
+.xp-pill-bar-wrap { width: 80px; height: 4px; background: var(--border2); border-radius: 2px; }
+.xp-pill-bar { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 2px; transition: width 0.6s; }
+.xp-pill-text { font-family: var(--mono); font-size: 11px; color: var(--text); white-space: nowrap; }
 
-  /* TABLES */
-  .log-table { width: 100%; border-collapse: collapse; }
-  .log-table th { font-size: 10px; color: var(--muted); letter-spacing: 1px; padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); }
-  .log-table td { padding: 10px 12px; font-size: 13px; border-bottom: 1px solid var(--border); }
-  .log-table tr:last-child td { border-bottom: none; }
-  .log-table tr:hover td { background: var(--surface2); }
-  .quality-badge { padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
-  .q-poor { background: #3d1010; color: var(--danger); }
-  .q-fair { background: #3d2e00; color: var(--warn); }
-  .q-good { background: #0d2040; color: var(--accent); }
-  .q-great { background: #0d3020; color: var(--accent2); }
+.content { padding: 32px; max-width: 1060px; }
 
-  /* WORKOUT */
-  .workout-form { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr auto; gap: 10px; align-items: end; margin-bottom: 12px; }
-  .cardio-form-grid { display: grid; grid-template-columns: 2fr 2fr 1fr auto; gap: 10px; align-items: end; margin-bottom: 12px; }
-  .toggle-cardio { font-size: 11px; color: var(--muted); cursor: pointer; margin-bottom: 16px; display: inline-block; }
-  .toggle-cardio:hover { color: var(--accent); }
-  .prev-perf { font-size: 10px; color: var(--warn); margin-top: 4px; min-height: 14px; }
+/* ── SECTION ── */
+.section { display: none; }
+.section.active { display: block; }
 
-  /* MUSCLE GRID */
-  .muscle-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
-  .muscle-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; text-align: center; }
-  .muscle-name { font-size: 11px; font-weight: 600; letter-spacing: 1px; margin-bottom: 6px; }
-  .muscle-sets { font-size: 22px; font-weight: 700; }
-  .muscle-bar-wrap { height: 4px; background: var(--border); border-radius: 2px; margin-top: 6px; }
-  .muscle-bar { height: 100%; border-radius: 2px; transition: width 0.5s; }
-  .m-red .muscle-sets { color: var(--danger); } .m-red .muscle-bar { background: var(--danger); }
-  .m-yellow .muscle-sets { color: var(--warn); } .m-yellow .muscle-bar { background: var(--warn); }
-  .m-green .muscle-sets { color: var(--accent2); } .m-green .muscle-bar { background: var(--accent2); }
+.page-header { margin-bottom: 28px; }
+.page-title { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
+.page-title span { color: var(--accent); }
+.page-desc { font-size: 14px; color: var(--text2); margin-top: 6px; }
 
-  /* HQ */
-  .hq-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
-  .hq-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; cursor: pointer; transition: border-color 0.2s; }
-  .hq-card:hover { border-color: var(--accent); }
-  .hq-card-title { font-size: 11px; font-weight: 700; letter-spacing: 2px; color: var(--muted); margin-bottom: 4px; }
-  .hq-card-name { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
-  .hq-progress-wrap { height: 4px; background: var(--border); border-radius: 2px; margin-bottom: 8px; }
-  .hq-progress { height: 100%; border-radius: 2px; background: var(--accent); transition: width 0.5s; }
-  .hq-stats { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
+/* ── CARDS ── */
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; padding: 24px; margin-bottom: 20px;
+}
+.card-header {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;
+}
+.card-title { font-size: 11px; font-weight: 600; letter-spacing: 2px; color: var(--text3); text-transform: uppercase; }
+.card-action { font-size: 11px; }
 
-  /* RANK */
-  .rank-section { background: linear-gradient(135deg, #0d1520, #0a1018); border: 1px solid var(--accent); border-radius: 12px; padding: 28px; margin-bottom: 24px; display: flex; align-items: center; gap: 32px; }
-  .rank-icon { font-size: 48px; }
-  .rank-info { flex: 1; }
-  .rank-title { font-size: 24px; font-weight: 700; color: var(--accent); letter-spacing: 2px; }
-  .rank-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
-  .rank-xp-bar-wrap { margin-top: 12px; height: 8px; background: var(--border); border-radius: 4px; }
-  .rank-xp-bar { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 4px; transition: width 0.5s; }
-  .rank-next { font-size: 11px; color: var(--muted); margin-top: 6px; }
-  .rank-table-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-  .rank-row { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; gap: 10px; }
-  .rank-row.current { border-color: var(--accent); background: #0d1520; }
-  .rank-row.unlocked { opacity: 0.6; }
-  .rank-row-name { font-size: 12px; font-weight: 600; flex: 1; }
-  .rank-row-xp { font-size: 11px; color: var(--muted); }
+/* ── STAT CARDS ── */
+.stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 20px; }
+.stat-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+.stat-label { font-size: 10px; letter-spacing: 2px; color: var(--text3); font-weight: 600; margin-bottom: 8px; }
+.stat-value { font-family: var(--mono); font-size: 28px; font-weight: 700; line-height: 1; }
+.stat-sub { font-size: 11px; color: var(--text2); margin-top: 6px; }
+.stat-bar-wrap { height: 3px; background: var(--border2); border-radius: 2px; margin-top: 10px; }
+.stat-bar { height: 100%; border-radius: 2px; transition: width 0.5s; }
 
-  /* MISC */
-  .section-header { margin-bottom: 24px; }
-  .section-title { font-size: 22px; font-weight: 700; letter-spacing: 1px; }
-  .section-desc { font-size: 13px; color: var(--muted); margin-top: 4px; }
-  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-  .empty-state { text-align: center; padding: 32px; color: var(--muted); font-size: 13px; }
-  .delete-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 14px; padding: 2px 6px; border-radius: 4px; }
-  .delete-btn:hover { color: var(--danger); background: #3d1010; }
-  .tag { font-size: 10px; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
-  .tag-blue { background: #0d2040; color: var(--accent); }
-  .tag-green { background: #0d3020; color: var(--accent2); }
-  .tag-orange { background: #3d2500; color: #ff9500; }
-  .tag-purple { background: #2d1040; color: #bb88ff; }
-  .tag-red { background: #3d1010; color: var(--danger); }
-  .tag-yellow { background: #3d2e00; color: var(--warn); }
-  .tag-gray { background: var(--surface2); color: var(--muted); }
-  .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent2); display: inline-block; margin-right: 6px; }
-  .sync-dot.syncing { background: var(--warn); animation: pulse 1s infinite; }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+/* ── HQ GRID ── */
+.hq-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.hq-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+  padding: 22px; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden;
+}
+.hq-card::before { content:''; position:absolute; inset:0; opacity:0; transition: opacity 0.2s; }
+.hq-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.hq-card:hover::before { opacity:1; }
+.hq-card-eyebrow { font-size: 10px; letter-spacing: 2px; color: var(--text3); font-weight: 600; margin-bottom: 6px; }
+.hq-card-name { font-size: 19px; font-weight: 700; margin-bottom: 16px; }
+.hq-prog-wrap { height: 3px; background: var(--border2); border-radius: 2px; margin-bottom: 10px; }
+.hq-prog { height: 100%; border-radius: 2px; }
+.hq-card-footer { display: flex; justify-content: space-between; font-size: 12px; color: var(--text2); }
+.hq-card-xp { font-family: var(--mono); font-weight: 700; }
 
-  @media (max-width: 768px) {
-    .topbar { padding: 0 16px; }
-    .main { padding: 16px; }
-    .two-col { grid-template-columns: 1fr; }
-    .sleep-form { grid-template-columns: 1fr 1fr; }
-    .workout-form { grid-template-columns: 1fr 1fr; }
-    .rank-table-grid { grid-template-columns: repeat(2, 1fr); }
-    .muscle-grid { grid-template-columns: repeat(2, 1fr); }
-    .xp-bar-wrap { width: 100px; }
-  }
+/* ── RANK TABLE ── */
+.rank-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.rank-row { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; display: flex; align-items: center; gap: 10px; transition: all 0.15s; }
+.rank-row.current { border-color: var(--accent); background: var(--accent-glow); }
+.rank-row.done { opacity: 0.5; }
+.rank-row-emoji { font-size: 20px; }
+.rank-row-info { flex: 1; }
+.rank-row-name { font-size: 12px; font-weight: 600; }
+.rank-row-xp { font-family: var(--mono); font-size: 10px; color: var(--text3); }
+.rank-check { color: var(--accent2); font-size: 13px; }
+
+/* ── OBJECTIVES ── */
+.obj-list { display: flex; flex-direction: column; gap: 8px; }
+.obj-item {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px 16px; cursor: pointer; transition: all 0.15s;
+}
+.obj-item:hover { border-color: var(--border2); background: var(--surface3); }
+.obj-item.done { opacity: 0.45; }
+.obj-item.done .obj-name { text-decoration: line-through; color: var(--text2); }
+.obj-check {
+  width: 20px; height: 20px; border-radius: 6px; border: 1.5px solid var(--border2);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; transition: all 0.15s;
+}
+.obj-item.done .obj-check { background: var(--accent2); border-color: var(--accent2); color: #000; }
+.obj-name { flex: 1; font-size: 14px; font-weight: 400; }
+.obj-xp { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--accent); margin-left: auto; white-space: nowrap; }
+.xp-pill-badge { display: flex; align-items: center; gap: 6px; background: var(--surface3); border: 1px solid var(--border2); border-radius: 20px; padding: 4px 12px; font-family: var(--mono); font-size: 11px; color: var(--accent2); }
+
+/* ── TAGS ── */
+.tag { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 6px; letter-spacing: 0.5px; white-space: nowrap; }
+.tag-blue   { background: rgba(0,140,255,0.12); color: #60a0ff; }
+.tag-green  { background: rgba(0,200,120,0.12); color: var(--accent2); }
+.tag-orange { background: rgba(255,140,0,0.12);  color: #ff9040; }
+.tag-purple { background: rgba(160,80,255,0.12); color: #c080ff; }
+.tag-red    { background: rgba(240,64,96,0.12);  color: var(--danger); }
+.tag-yellow { background: rgba(240,165,0,0.12);  color: var(--warn); }
+.tag-gray   { background: var(--surface3); color: var(--text2); }
+
+/* ── SAVINGS ── */
+.savings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+.sav-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+.sav-label { font-size: 10px; letter-spacing: 2px; color: var(--text3); font-weight: 600; margin-bottom: 8px; }
+.sav-amount { font-family: var(--mono); font-size: 24px; font-weight: 700; color: var(--accent2); margin-bottom: 10px; }
+.sav-bar-wrap { height: 3px; background: var(--border2); border-radius: 2px; }
+.sav-bar { height: 100%; background: var(--accent2); border-radius: 2px; transition: width 0.5s; }
+.sav-pct { font-size: 10px; color: var(--text3); margin-top: 6px; }
+
+/* ── FORMS ── */
+.form-row { display: grid; gap: 12px; align-items: end; margin-bottom: 16px; }
+.form-row-5 { grid-template-columns: 2fr 0.7fr 0.7fr 1fr 1fr auto; }
+.form-row-4 { grid-template-columns: 2fr 1fr 1fr auto; }
+.form-row-sleep { grid-template-columns: 1fr 1fr 1fr 1fr auto; }
+.fg label { display: block; font-size: 10px; letter-spacing: 1.5px; color: var(--text3); font-weight: 600; margin-bottom: 6px; }
+.fg input, .fg select {
+  width: 100%; background: var(--surface2); border: 1px solid var(--border2);
+  color: var(--text); border-radius: 8px; padding: 10px 14px;
+  font-size: 13px; font-family: var(--font); outline: none; transition: border-color 0.15s;
+}
+.fg input:focus, .fg select:focus { border-color: var(--accent); }
+.fg input::placeholder { color: var(--text3); }
+.fg select option { background: var(--surface2); }
+.prev-hint { font-size: 10px; color: var(--warn); margin-top: 5px; min-height: 14px; font-family: var(--mono); }
+
+.btn {
+  background: var(--accent); color: #000; border: none;
+  border-radius: 8px; padding: 10px 20px; font-size: 12px;
+  font-weight: 700; letter-spacing: 1px; cursor: pointer; font-family: var(--font);
+  transition: all 0.15s; white-space: nowrap;
+}
+.btn:hover { opacity: 0.85; }
+.btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.btn-sm { padding: 6px 14px; font-size: 11px; }
+.btn-ghost { background: var(--surface2); color: var(--text2); border: 1px solid var(--border2); }
+.btn-ghost:hover { color: var(--text); border-color: var(--border); }
+
+.toggle-link { font-size: 11px; color: var(--text3); cursor: pointer; margin-bottom: 16px; display: inline-flex; align-items: center; gap: 4px; transition: color 0.15s; }
+.toggle-link:hover { color: var(--accent); }
+
+/* ── TABLES ── */
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th { font-size: 10px; letter-spacing: 1.5px; color: var(--text3); font-weight: 600; padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+.data-table td { padding: 12px 14px; font-size: 13px; border-bottom: 1px solid var(--border); }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tbody tr:hover td { background: var(--surface2); }
+.quality-badge { padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; }
+.q-poor { background: rgba(240,64,96,0.12);  color: var(--danger); }
+.q-fair { background: rgba(240,165,0,0.12);  color: var(--warn); }
+.q-good { background: rgba(0,200,240,0.12);  color: var(--accent); }
+.q-great{ background: rgba(0,232,122,0.12);  color: var(--accent2); }
+.del-btn { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 14px; padding: 3px 8px; border-radius: 6px; transition: all 0.15s; }
+.del-btn:hover { color: var(--danger); background: rgba(240,64,96,0.1); }
+
+/* ── MUSCLE GRID ── */
+.muscle-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.muscle-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 16px; text-align: center; transition: all 0.15s; }
+.muscle-card:hover { border-color: var(--border2); }
+.muscle-name { font-size: 10px; letter-spacing: 1.5px; color: var(--text3); font-weight: 600; margin-bottom: 8px; }
+.muscle-num  { font-family: var(--mono); font-size: 28px; font-weight: 700; }
+.muscle-bar-wrap { height: 3px; background: var(--border2); border-radius: 2px; margin-top: 8px; }
+.muscle-bar { height: 100%; border-radius: 2px; transition: width 0.5s; }
+.m-red    .muscle-num { color: var(--danger); } .m-red    .muscle-bar { background: var(--danger); }
+.m-yellow .muscle-num { color: var(--warn); }   .m-yellow .muscle-bar { background: var(--warn); }
+.m-green  .muscle-num { color: var(--accent2); } .m-green  .muscle-bar { background: var(--accent2); }
+.muscle-sub { font-size: 10px; color: var(--text3); margin-top: 5px; }
+
+/* ── JOB TABLE INPUT ── */
+.inline-input {
+  background: none; border: none; color: var(--text); font-size: 13px; font-family: var(--font);
+  width: 100%; outline: none; border-bottom: 1px dashed transparent; transition: border-color 0.15s; padding: 2px 0;
+}
+.inline-input:focus { border-bottom-color: var(--accent); }
+.inline-input::placeholder { color: var(--text3); }
+.status-select {
+  background: var(--surface2); border: 1px solid var(--border2); color: var(--text);
+  border-radius: 6px; padding: 4px 8px; font-size: 12px; font-family: var(--font); outline: none;
+}
+
+/* ── TWO COL ── */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.empty-state { text-align: center; padding: 40px; color: var(--text3); font-size: 13px; }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+/* ── MOBILE ── */
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(-100%); transition: transform 0.3s; }
+  .sidebar.open { transform: translateX(0); }
+  .main { margin-left: 0; }
+  .content { padding: 16px; }
+  .topbar { padding: 0 16px; }
+  .two-col { grid-template-columns: 1fr; }
+  .muscle-grid { grid-template-columns: repeat(2, 1fr); }
+  .rank-grid { grid-template-columns: repeat(2, 1fr); }
+  .form-row-5, .form-row-4, .form-row-sleep { grid-template-columns: 1fr 1fr; }
+  .hq-cards { grid-template-columns: 1fr; }
+  .mobile-menu-btn { display: flex; }
+}
+.mobile-menu-btn { display: none; background: none; border: none; color: var(--text); font-size: 20px; cursor: pointer; }
 </style>
 </head>
 <body>
 
 <div id="loadingOverlay">
   <div class="loader"></div>
-  <div class="loader-text">SYNCING DATA...</div>
+  <div class="loader-text">SYNCING DATA</div>
 </div>
 
-<!-- TOP BAR -->
-<div class="topbar">
-  <div class="topbar-left">
-    <div class="logo">OPERATION <span>RESET</span></div>
-    <div class="rank-badge" id="topRank">🪖 RECRUIT</div>
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-top">
+    <div class="logo-text">OPERATION RESET</div>
+    <div class="logo-sub">COMMAND CENTER</div>
   </div>
-  <div class="topbar-right">
-    <div style="display:flex;align-items:center;font-size:10px;color:var(--muted)">
-      <span class="sync-dot" id="syncDot"></span><span id="syncLabel">SYNCED</span>
+
+  <div class="rank-card">
+    <div class="rank-icon-big" id="sideRankIcon">🪖</div>
+    <div class="rank-name" id="sideRankName">RECRUIT</div>
+    <div class="rank-xp-text" id="sideRankXP">0 XP</div>
+    <div class="rank-bar-wrap"><div class="rank-bar" id="sideRankBar" style="width:0%"></div></div>
+    <div class="rank-next-text" id="sideRankNext">100 XP to Private</div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">NAVIGATION</div>
+    <button class="nav-btn active" onclick="showSection('hq',this)"><span class="nav-icon">⬡</span>HQ Dashboard</button>
+    <button class="nav-btn" onclick="showSection('ledger',this)"><span class="nav-icon">📒</span>The Ledger<span class="nav-badge" id="navLedgerXP"></span></button>
+    <button class="nav-btn" onclick="showSection('exit',this)"><span class="nav-icon">🚪</span>The Exit<span class="nav-badge" id="navExitXP"></span></button>
+    <button class="nav-btn" onclick="showSection('iron',this)"><span class="nav-icon">🏋️</span>The Iron</button>
+    <button class="nav-btn" onclick="showSection('rest',this)"><span class="nav-icon">😴</span>The Rest</button>
+    <button class="nav-btn" onclick="showSection('edge',this)"><span class="nav-icon">📈</span>The Edge<span class="nav-badge" id="navEdgeXP"></span></button>
+  </div>
+
+  <div class="sidebar-bottom">
+    <div class="days-block">
+      <div class="days-number" id="daysLeft">--</div>
+      <div class="days-label">DAYS REMAINING</div>
+      <div class="days-sublabel">Until Aug 10, 2026</div>
     </div>
-    <div class="days-badge">
-      <div class="days-num" id="daysLeft">--</div>
-      <div class="days-lbl">DAYS LEFT</div>
-    </div>
-    <div class="xp-block">
-      <div class="xp-label">TOTAL XP</div>
-      <div class="xp-bar-wrap"><div class="xp-bar" id="topXpBar" style="width:0%"></div></div>
-      <div class="xp-nums"><span id="topXpNum">0</span> / <span id="topXpNext">100</span></div>
+    <div class="sync-row">
+      <div class="sync-dot" id="syncDot"></div>
+      <div class="sync-text" id="syncLabel">SYNCED</div>
     </div>
   </div>
-</div>
+</aside>
 
-<!-- NAV -->
-<div class="nav">
-  <button class="nav-btn active" onclick="showSection('hq',this)">⬡ HQ</button>
-  <button class="nav-btn" onclick="showSection('ledger',this)">📒 THE LEDGER</button>
-  <button class="nav-btn" onclick="showSection('exit',this)">🚪 THE EXIT</button>
-  <button class="nav-btn" onclick="showSection('iron',this)">🏋️ THE IRON</button>
-  <button class="nav-btn" onclick="showSection('rest',this)">😴 THE REST</button>
-  <button class="nav-btn" onclick="showSection('edge',this)">📈 THE EDGE</button>
-</div>
-
+<!-- MAIN -->
 <div class="main">
-
-  <!-- HQ -->
-  <div class="section active" id="sec-hq">
-    <div class="rank-section">
-      <div class="rank-icon" id="hqRankIcon">🪖</div>
-      <div class="rank-info">
-        <div class="rank-title" id="hqRankTitle">RECRUIT</div>
-        <div class="rank-sub" id="hqRankSub">0 XP earned — keep moving, soldier</div>
-        <div class="rank-xp-bar-wrap"><div class="rank-xp-bar" id="hqXpBar" style="width:0%"></div></div>
-        <div class="rank-next" id="hqRankNext">100 XP to reach Private</div>
-      </div>
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:12px">
+      <button class="mobile-menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      <span class="topbar-title" id="topbarTitle">HQ Dashboard</span>
     </div>
-    <div class="hq-grid" id="hqGrid"></div>
-    <div class="card" style="margin-top:20px">
-      <div class="card-title">RANK TABLE</div>
-      <div class="rank-table-grid" id="rankTable"></div>
+    <div class="topbar-right">
+      <div class="xp-pill">
+        <div class="xp-pill-bar-wrap"><div class="xp-pill-bar" id="topXpBar" style="width:0%"></div></div>
+        <div class="xp-pill-text"><span id="topXpNum">0</span> XP</div>
+      </div>
     </div>
   </div>
 
-  <!-- LEDGER -->
-  <div class="section" id="sec-ledger">
-    <div class="section-header">
-      <div class="section-title">📒 THE LEDGER</div>
-      <div class="section-desc">Financial intel — savings, spending audit, bills, insurance.</div>
+  <div class="content">
+
+    <!-- HQ -->
+    <div class="section active" id="sec-hq">
+      <div class="page-header">
+        <div class="page-title">Command <span>Center</span></div>
+        <div class="page-desc">Your mission overview. Complete objectives. Earn XP. Reach Commander.</div>
+      </div>
+      <div class="hq-cards" id="hqGrid"></div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Rank Progression</div></div>
+        <div class="rank-grid" id="rankTable"></div>
+      </div>
     </div>
-    <div class="card">
-      <div class="card-title">SAVINGS PROGRESS</div>
-      <div class="savings-grid">
-        <div class="savings-item">
-          <div class="savings-label">CURRENT SAVINGS</div>
-          <div class="savings-amount">$<input type="number" id="currentSavings" style="background:none;border:none;color:var(--accent2);font-size:22px;font-weight:700;width:120px;outline:none;" placeholder="0" onchange="saveSavings()"></div>
+
+    <!-- LEDGER -->
+    <div class="section" id="sec-ledger">
+      <div class="page-header">
+        <div class="page-title">📒 The <span>Ledger</span></div>
+        <div class="page-desc">Financial intel — savings milestones, spending audit, bills, insurance.</div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Savings Progress</div></div>
+        <div class="savings-grid">
+          <div class="sav-card">
+            <div class="sav-label">CURRENT BALANCE</div>
+            <div class="sav-amount" style="display:flex;align-items:baseline;gap:2px">
+              $<input type="number" id="currentSavings" style="background:none;border:none;color:var(--accent2);font-size:24px;font-weight:700;font-family:var(--mono);width:110px;outline:none;" placeholder="0" onchange="saveSavings()">
+            </div>
+          </div>
+          <div class="sav-card"><div class="sav-label">MILESTONE 1</div><div class="sav-amount">$1,000</div><div class="sav-bar-wrap"><div class="sav-bar" id="bar1000" style="width:0%"></div></div><div class="sav-pct" id="pct1000">0% complete</div></div>
+          <div class="sav-card"><div class="sav-label">MILESTONE 2</div><div class="sav-amount">$2,500</div><div class="sav-bar-wrap"><div class="sav-bar" id="bar2500" style="width:0%"></div></div><div class="sav-pct" id="pct2500">0% complete</div></div>
+          <div class="sav-card"><div class="sav-label">MILESTONE 3</div><div class="sav-amount">$5,000</div><div class="sav-bar-wrap"><div class="sav-bar" id="bar5000" style="width:0%"></div></div><div class="sav-pct" id="pct5000">0% complete</div></div>
+          <div class="sav-card"><div class="sav-label">MILESTONE 4</div><div class="sav-amount">$8,000</div><div class="sav-bar-wrap"><div class="sav-bar" id="bar8000" style="width:0%"></div></div><div class="sav-pct" id="pct8000">0% complete</div></div>
         </div>
-        <div class="savings-item"><div class="savings-label">MILESTONE 1</div><div class="savings-amount" style="font-size:18px">$1,000</div><div class="savings-bar-wrap"><div class="savings-bar" id="bar1000" style="width:0%"></div></div><div class="savings-target" id="pct1000">0% there</div></div>
-        <div class="savings-item"><div class="savings-label">MILESTONE 2</div><div class="savings-amount" style="font-size:18px">$2,500</div><div class="savings-bar-wrap"><div class="savings-bar" id="bar2500" style="width:0%"></div></div><div class="savings-target" id="pct2500">0% there</div></div>
-        <div class="savings-item"><div class="savings-label">MILESTONE 3</div><div class="savings-amount" style="font-size:18px">$5,000</div><div class="savings-bar-wrap"><div class="savings-bar" id="bar5000" style="width:0%"></div></div><div class="savings-target" id="pct5000">0% there</div></div>
-        <div class="savings-item"><div class="savings-label">MILESTONE 4</div><div class="savings-amount" style="font-size:18px">$8,000</div><div class="savings-bar-wrap"><div class="savings-bar" id="bar8000" style="width:0%"></div></div><div class="savings-target" id="pct8000">0% there</div></div>
       </div>
-    </div>
-    <div class="card">
-      <div class="card-title">OBJECTIVES <span class="pill" id="ledgerXpPill">0 XP earned</span></div>
-      <div class="obj-list" id="ledgerObjs"></div>
-    </div>
-  </div>
-
-  <!-- EXIT -->
-  <div class="section" id="sec-exit">
-    <div class="section-header">
-      <div class="section-title">🚪 THE EXIT</div>
-      <div class="section-desc">Career ops — resume, job apps, CAMS, interviews, offer, night job.</div>
-    </div>
-    <div class="card">
-      <div class="card-title">JOB APPLICATIONS <button class="btn" style="padding:4px 12px;font-size:10px" onclick="addJobApp()">+ ADD</button></div>
-      <div id="jobAppList"></div>
-    </div>
-    <div class="card">
-      <div class="card-title">OBJECTIVES <span class="pill" id="exitXpPill">0 XP earned</span></div>
-      <div class="obj-list" id="exitObjs"></div>
-    </div>
-  </div>
-
-  <!-- IRON -->
-  <div class="section" id="sec-iron">
-    <div class="section-header">
-      <div class="section-title">🏋️ THE IRON</div>
-      <div class="section-desc">Workout log — track sets, reps, weight. Cardio tracks miles.</div>
-    </div>
-    <div class="card">
-      <div class="card-title">MUSCLE BALANCE — LAST 7 DAYS <span class="pill">🔴 &lt;5  🟡 5-9  🟢 10+</span></div>
-      <div class="muscle-grid" id="muscleGrid"></div>
-    </div>
-    <div class="card">
-      <div class="card-title">LOG A SET</div>
-      <span class="toggle-cardio" onclick="toggleCardio()" id="cardioToggle">Switch to Cardio mode →</span>
-      <div class="workout-form" id="workoutForm">
-        <div class="form-group">
-          <label>EXERCISE</label>
-          <select id="exSelect" onchange="loadPrevPerf()">
-            <optgroup label="── CHEST ──"><option>Bench Press</option><option>Incline Dumbbell Press</option><option>Cable Fly</option><option>Push-Up</option></optgroup>
-            <optgroup label="── BACK ──"><option>Pull-Up</option><option>Barbell Row</option><option>Lat Pulldown</option><option>Seated Cable Row</option></optgroup>
-            <optgroup label="── SHOULDERS ──"><option>Overhead Press</option><option>Lateral Raise</option><option>Face Pull</option></optgroup>
-            <optgroup label="── BICEPS ──"><option>Barbell Curl</option><option>Hammer Curl</option><option>Incline Dumbbell Curl</option></optgroup>
-            <optgroup label="── TRICEPS ──"><option>Tricep Pushdown</option><option>Skull Crusher</option><option>Overhead Tricep Extension</option></optgroup>
-            <optgroup label="── LEGS ──"><option>Squat</option><option>Romanian Deadlift</option><option>Leg Press</option><option>Leg Curl</option><option>Calf Raise</option></optgroup>
-            <optgroup label="── CORE ──"><option>Plank</option><option>Ab Wheel Rollout</option><option>Hanging Leg Raise</option></optgroup>
-          </select>
-          <div class="prev-perf" id="prevPerfLabel"></div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Objectives</div>
+          <div class="xp-pill-badge" id="ledgerXpPill">0 XP</div>
         </div>
-        <div class="form-group"><label>SET #</label><input type="number" id="setNum" min="1" value="1" onchange="loadPrevPerf()"></div>
-        <div class="form-group"><label>REPS</label><input type="number" id="setReps" min="1"></div>
-        <div class="form-group"><label>WEIGHT (LBS)</label><input type="number" id="setWeight" min="0"></div>
-        <div class="form-group"><label>DATE</label><input type="date" id="setDate"></div>
-        <div><button class="btn" id="logSetBtn" onclick="logSet()">LOG</button></div>
-      </div>
-      <div class="cardio-form-grid" id="cardioForm" style="display:none">
-        <div class="form-group"><label>CARDIO TYPE</label><select id="cardioEx"><option>Running</option><option>Treadmill</option><option>Cycling</option><option>Stairmaster</option></select></div>
-        <div class="form-group"><label>MILES</label><input type="number" id="cardioMiles" min="0" step="0.1"></div>
-        <div class="form-group"><label>DATE</label><input type="date" id="cardioDate"></div>
-        <div><button class="btn" id="logCardioBtn" onclick="logCardio()">LOG</button></div>
+        <div class="obj-list" id="ledgerObjs"></div>
       </div>
     </div>
-    <div class="card">
-      <div class="card-title">WORKOUT HISTORY</div>
-      <div style="margin-bottom:12px">
-        <select id="filterEx" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px 10px;font-size:12px;outline:none" onchange="renderWorkoutHistory()">
-          <option value="">All exercises</option>
-        </select>
-        <button class="btn btn-ghost" style="padding:6px 12px;font-size:10px;margin-left:8px" onclick="document.getElementById('filterEx').value='';renderWorkoutHistory()">Clear filter</button>
-      </div>
-      <div id="workoutHistory"></div>
-    </div>
-  </div>
 
-  <!-- REST -->
-  <div class="section" id="sec-rest">
-    <div class="section-header">
-      <div class="section-title">😴 THE REST</div>
-      <div class="section-desc">Sleep log — bedtime, wake time, quality. Build the streak.</div>
-    </div>
-    <div class="two-col" style="margin-bottom:20px">
-      <div class="card" style="margin-bottom:0">
-        <div class="card-title">CURRENT STREAK</div>
-        <div style="font-size:48px;font-weight:700;color:var(--accent)" id="sleepStreak">0</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:4px">consecutive nights logged</div>
+    <!-- EXIT -->
+    <div class="section" id="sec-exit">
+      <div class="page-header">
+        <div class="page-title">🚪 The <span>Exit</span></div>
+        <div class="page-desc">Career ops — resume, applications, CAMS cert, interviews, offer.</div>
       </div>
-      <div class="card" style="margin-bottom:0">
-        <div class="card-title">AVG SLEEP (LAST 7 DAYS)</div>
-        <div style="font-size:48px;font-weight:700;color:var(--accent2)" id="avgSleep">--</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:4px">hours per night</div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Job Applications</div>
+          <button class="btn btn-sm" onclick="addJobApp()">+ Add Application</button>
+        </div>
+        <div id="jobAppList"></div>
       </div>
-    </div>
-    <div class="card">
-      <div class="card-title">LOG TONIGHT</div>
-      <div class="sleep-form">
-        <div class="form-group"><label>DATE</label><input type="date" id="sleepDate"></div>
-        <div class="form-group"><label>BEDTIME</label><input type="time" id="sleepBed"></div>
-        <div class="form-group"><label>WAKE TIME</label><input type="time" id="sleepWake"></div>
-        <div class="form-group"><label>QUALITY</label><select id="sleepQuality"><option>Great</option><option>Good</option><option>Fair</option><option>Poor</option></select></div>
-        <div><button class="btn" id="logSleepBtn" onclick="logSleep()">LOG</button></div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Objectives</div>
+          <div class="xp-pill-badge" id="exitXpPill">0 XP</div>
+        </div>
+        <div class="obj-list" id="exitObjs"></div>
       </div>
     </div>
-    <div class="card">
-      <div class="card-title">SLEEP LOG</div>
-      <table class="log-table">
-        <thead><tr><th>DATE</th><th>BEDTIME</th><th>WAKE</th><th>HOURS</th><th>QUALITY</th><th></th></tr></thead>
-        <tbody id="sleepLogBody"></tbody>
-      </table>
-      <div class="empty-state" id="sleepEmpty">No entries yet. Log your first night above.</div>
-    </div>
-  </div>
 
-  <!-- EDGE -->
-  <div class="section" id="sec-edge">
-    <div class="section-header">
-      <div class="section-title">📈 THE EDGE</div>
-      <div class="section-desc">Trading milestones — Kronos, NQ + Gold strategy, consistency.</div>
+    <!-- IRON -->
+    <div class="section" id="sec-iron">
+      <div class="page-header">
+        <div class="page-title">🏋️ The <span>Iron</span></div>
+        <div class="page-desc">Workout log — sets, reps, weight. Cardio tracks miles.</div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Muscle Balance — Last 7 Days</div>
+          <div style="font-size:11px;color:var(--text3)">🔴 &lt;5 &nbsp; 🟡 5-9 &nbsp; 🟢 10+</div>
+        </div>
+        <div class="muscle-grid" id="muscleGrid"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Log a Set</div></div>
+        <span class="toggle-link" onclick="toggleCardio()" id="cardioToggle">⇄ Switch to Cardio</span>
+        <div class="form-row form-row-5" id="workoutForm">
+          <div class="fg">
+            <label>EXERCISE</label>
+            <select id="exSelect" onchange="loadPrevPerf()">
+              <optgroup label="CHEST"><option>Bench Press</option><option>Incline Dumbbell Press</option><option>Cable Fly</option><option>Push-Up</option></optgroup>
+              <optgroup label="BACK"><option>Pull-Up</option><option>Barbell Row</option><option>Lat Pulldown</option><option>Seated Cable Row</option></optgroup>
+              <optgroup label="SHOULDERS"><option>Overhead Press</option><option>Lateral Raise</option><option>Face Pull</option></optgroup>
+              <optgroup label="BICEPS"><option>Barbell Curl</option><option>Hammer Curl</option><option>Incline Dumbbell Curl</option></optgroup>
+              <optgroup label="TRICEPS"><option>Tricep Pushdown</option><option>Skull Crusher</option><option>Overhead Tricep Extension</option></optgroup>
+              <optgroup label="LEGS"><option>Squat</option><option>Romanian Deadlift</option><option>Leg Press</option><option>Leg Curl</option><option>Calf Raise</option></optgroup>
+              <optgroup label="CORE"><option>Plank</option><option>Ab Wheel Rollout</option><option>Hanging Leg Raise</option></optgroup>
+            </select>
+            <div class="prev-hint" id="prevPerfLabel"></div>
+          </div>
+          <div class="fg"><label>SET #</label><input type="number" id="setNum" min="1" value="1" onchange="loadPrevPerf()"></div>
+          <div class="fg"><label>REPS</label><input type="number" id="setReps" min="1"></div>
+          <div class="fg"><label>WEIGHT (LBS)</label><input type="number" id="setWeight" min="0"></div>
+          <div class="fg"><label>DATE</label><input type="date" id="setDate"></div>
+          <div style="padding-top:22px"><button class="btn" id="logSetBtn" onclick="logSet()">LOG</button></div>
+        </div>
+        <div class="form-row form-row-4" id="cardioForm" style="display:none">
+          <div class="fg"><label>TYPE</label><select id="cardioEx"><option>Running</option><option>Treadmill</option><option>Cycling</option><option>Stairmaster</option></select></div>
+          <div class="fg"><label>MILES</label><input type="number" id="cardioMiles" min="0" step="0.1"></div>
+          <div class="fg"><label>DATE</label><input type="date" id="cardioDate"></div>
+          <div style="padding-top:22px"><button class="btn" id="logCardioBtn" onclick="logCardio()">LOG</button></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Workout History</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <select id="filterEx" class="status-select" onchange="renderWorkoutHistory()"><option value="">All exercises</option></select>
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('filterEx').value='';renderWorkoutHistory()">Clear</button>
+          </div>
+        </div>
+        <div id="workoutHistory"></div>
+      </div>
     </div>
-    <div class="card">
-      <div class="card-title">MILESTONES <span class="pill" id="edgeXpPill">0 XP earned</span></div>
-      <div class="obj-list" id="edgeObjs"></div>
-    </div>
-  </div>
 
+    <!-- REST -->
+    <div class="section" id="sec-rest">
+      <div class="page-header">
+        <div class="page-title">😴 The <span>Rest</span></div>
+        <div class="page-desc">Sleep log — build your streak, track your recovery.</div>
+      </div>
+      <div class="two-col">
+        <div class="card" style="margin-bottom:0">
+          <div class="card-header"><div class="card-title">Current Streak</div></div>
+          <div style="font-family:var(--mono);font-size:56px;font-weight:700;color:var(--accent);line-height:1" id="sleepStreak">0</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:8px">consecutive nights logged</div>
+        </div>
+        <div class="card" style="margin-bottom:0">
+          <div class="card-header"><div class="card-title">Avg Sleep (Last 7)</div></div>
+          <div style="font-family:var(--mono);font-size:56px;font-weight:700;color:var(--accent2);line-height:1" id="avgSleep">--</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:8px">hours per night</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Log Tonight</div></div>
+        <div class="form-row form-row-sleep">
+          <div class="fg"><label>DATE</label><input type="date" id="sleepDate"></div>
+          <div class="fg"><label>BEDTIME</label><input type="time" id="sleepBed"></div>
+          <div class="fg"><label>WAKE TIME</label><input type="time" id="sleepWake"></div>
+          <div class="fg"><label>QUALITY</label><select id="sleepQuality"><option>Great</option><option>Good</option><option>Fair</option><option>Poor</option></select></div>
+          <div style="padding-top:22px"><button class="btn" id="logSleepBtn" onclick="logSleep()">LOG</button></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Sleep Log</div></div>
+        <table class="data-table">
+          <thead><tr><th>DATE</th><th>BEDTIME</th><th>WAKE</th><th>HOURS</th><th>QUALITY</th><th></th></tr></thead>
+          <tbody id="sleepLogBody"></tbody>
+        </table>
+        <div class="empty-state" id="sleepEmpty">No entries yet. Log your first night above.</div>
+      </div>
+    </div>
+
+    <!-- EDGE -->
+    <div class="section" id="sec-edge">
+      <div class="page-header">
+        <div class="page-title">📈 The <span>Edge</span></div>
+        <div class="page-desc">Trading milestones — Kronos dashboard, NQ + Gold strategy, consistency.</div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Milestones</div>
+          <div class="xp-pill-badge" id="edgeXpPill">0 XP</div>
+        </div>
+        <div class="obj-list" id="edgeObjs"></div>
+      </div>
+    </div>
+
+  </div>
 </div>
 
 <script>
-// ─── SUPABASE ────────────────────────────────────────────────────────────────
+// ── SUPABASE ──────────────────────────────────────────────────────────────────
 const SUPABASE_URL = 'https://orgpnocawqyizmuzctzr.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_bONLsmElleCeNoaucF7FFg_bjJVDNM_';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// ─── CONSTANTS ───────────────────────────────────────────────────────────────
+// ── CONSTANTS ─────────────────────────────────────────────────────────────────
 const RANKS = [
-  { name: 'Recruit',    icon: '🪖', xp: 0    },
-  { name: 'Private',    icon: '🔰', xp: 100  },
-  { name: 'Specialist', icon: '⚙️', xp: 350  },
-  { name: 'Sergeant',   icon: '3️⃣', xp: 750  },
-  { name: 'Lieutenant', icon: '🥈', xp: 1400 },
-  { name: 'Captain',    icon: '🥇', xp: 2200 },
-  { name: 'Major',      icon: '⭐', xp: 3200 },
-  { name: 'Commander',  icon: '🌟', xp: 4500 },
+  { name:'Recruit',    icon:'🪖', xp:0    },
+  { name:'Private',    icon:'🔰', xp:100  },
+  { name:'Specialist', icon:'⚙️', xp:350  },
+  { name:'Sergeant',   icon:'3️⃣', xp:750  },
+  { name:'Lieutenant', icon:'🥈', xp:1400 },
+  { name:'Captain',    icon:'🥇', xp:2200 },
+  { name:'Major',      icon:'⭐', xp:3200 },
+  { name:'Commander',  icon:'🌟', xp:4500 },
 ];
 
 const EXERCISE_GROUPS = {
@@ -426,480 +567,428 @@ const EXERCISE_GROUPS = {
 };
 
 const DEFAULT_LEDGER = [
-  { id:1, name:'Pull 60 days of bank statements', cat:'Audit', xp:25, done:false },
-  { id:2, name:'Complete spending leak audit — find top 3 leaks', cat:'Audit', xp:50, done:false },
-  { id:3, name:'Build monthly budget + stick to it 30 days', cat:'Audit', xp:75, done:false },
-  { id:4, name:'Audit all subscriptions — cancel unused', cat:'Bills', xp:30, done:false },
-  { id:5, name:'Review and optimize insurance coverage', cat:'Insurance', xp:40, done:false },
+  {id:1,name:'Pull 60 days of bank statements',cat:'Audit',xp:25,done:false},
+  {id:2,name:'Complete spending leak audit — find top 3 leaks',cat:'Audit',xp:50,done:false},
+  {id:3,name:'Build monthly budget + stick to it 30 days',cat:'Audit',xp:75,done:false},
+  {id:4,name:'Audit all subscriptions — cancel unused',cat:'Bills',xp:30,done:false},
+  {id:5,name:'Review and optimize insurance coverage',cat:'Insurance',xp:40,done:false},
 ];
-
 const DEFAULT_EXIT = [
-  { id:1,  name:'Rewrite resume for remote fraud/AML roles', cat:'Resume', xp:75, done:false },
-  { id:2,  name:'Apply to Lead #1', cat:'Job App', xp:10, done:false },
-  { id:3,  name:'Apply to Lead #2', cat:'Job App', xp:10, done:false },
-  { id:4,  name:'Apply to Lead #3', cat:'Job App', xp:10, done:false },
-  { id:5,  name:'Apply to Lead #4', cat:'Job App', xp:10, done:false },
-  { id:6,  name:'Apply to Lead #5', cat:'Job App', xp:10, done:false },
-  { id:7,  name:'Land first interview', cat:'Interview', xp:100, done:false },
-  { id:8,  name:'Pass to final round', cat:'Interview', xp:150, done:false },
-  { id:9,  name:'Receive job offer', cat:'Offer', xp:300, done:false },
-  { id:10, name:'Register for CAMS exam', cat:'Cert', xp:50, done:false },
-  { id:11, name:'Pass CAMS exam', cat:'Cert', xp:200, done:false },
-  { id:12, name:'Give notice at night job', cat:'Night Job', xp:100, done:false },
+  {id:1, name:'Rewrite resume for remote fraud/AML roles',cat:'Resume',xp:75,done:false},
+  {id:2, name:'Apply to Lead #1',cat:'Job App',xp:10,done:false},
+  {id:3, name:'Apply to Lead #2',cat:'Job App',xp:10,done:false},
+  {id:4, name:'Apply to Lead #3',cat:'Job App',xp:10,done:false},
+  {id:5, name:'Apply to Lead #4',cat:'Job App',xp:10,done:false},
+  {id:6, name:'Apply to Lead #5',cat:'Job App',xp:10,done:false},
+  {id:7, name:'Land first interview',cat:'Interview',xp:100,done:false},
+  {id:8, name:'Pass to final round',cat:'Interview',xp:150,done:false},
+  {id:9, name:'Receive job offer',cat:'Offer',xp:300,done:false},
+  {id:10,name:'Register for CAMS exam',cat:'Cert',xp:50,done:false},
+  {id:11,name:'Pass CAMS exam',cat:'Cert',xp:200,done:false},
+  {id:12,name:'Give notice at night job',cat:'Night Job',xp:100,done:false},
 ];
-
 const DEFAULT_EDGE = [
-  { id:1, name:'Build Kronos base dashboard in TradingView', cat:'Kronos', xp:75, done:false },
-  { id:2, name:'Finish Kronos Pine Script indicator v1', cat:'Kronos', xp:125, done:false },
-  { id:3, name:'Define NQ entry rules (long + short setups)', cat:'NQ', xp:75, done:false },
-  { id:4, name:'Define Gold entry rules (long + short setups)', cat:'Gold', xp:75, done:false },
-  { id:5, name:'Set hard daily loss limit — follow it 30 days', cat:'Risk', xp:100, done:false },
-  { id:6, name:'Complete 10 consecutive rule-based NQ trades', cat:'Consistency', xp:100, done:false },
-  { id:7, name:'Complete 10 consecutive rule-based Gold trades', cat:'Consistency', xp:100, done:false },
-  { id:8, name:'Log 30 days of trade journal entries', cat:'Consistency', xp:150, done:false },
-  { id:9, name:'Achieve positive P&L for one full month', cat:'Consistency', xp:200, done:false },
+  {id:1,name:'Build Kronos base dashboard in TradingView',cat:'Kronos',xp:75,done:false},
+  {id:2,name:'Finish Kronos Pine Script indicator v1',cat:'Kronos',xp:125,done:false},
+  {id:3,name:'Define NQ entry rules (long + short setups)',cat:'NQ',xp:75,done:false},
+  {id:4,name:'Define Gold entry rules (long + short setups)',cat:'Gold',xp:75,done:false},
+  {id:5,name:'Set hard daily loss limit — follow it 30 days',cat:'Risk',xp:100,done:false},
+  {id:6,name:'Complete 10 consecutive rule-based NQ trades',cat:'Consistency',xp:100,done:false},
+  {id:7,name:'Complete 10 consecutive rule-based Gold trades',cat:'Consistency',xp:100,done:false},
+  {id:8,name:'Log 30 days of trade journal entries',cat:'Consistency',xp:150,done:false},
+  {id:9,name:'Achieve positive P&L for one full month',cat:'Consistency',xp:200,done:false},
 ];
 
-// ─── STATE ───────────────────────────────────────────────────────────────────
+// ── STATE ─────────────────────────────────────────────────────────────────────
 let ledgerObjs = JSON.parse(JSON.stringify(DEFAULT_LEDGER));
 let exitObjs   = JSON.parse(JSON.stringify(DEFAULT_EXIT));
 let edgeObjs   = JSON.parse(JSON.stringify(DEFAULT_EDGE));
-let sleepLog   = [];
-let workoutLog = [];
-let jobApps    = [];
-let savings    = 0;
+let sleepLog=[], workoutLog=[], jobApps=[], savings=0;
 
-// ─── SYNC INDICATOR ──────────────────────────────────────────────────────────
+// ── SYNC ──────────────────────────────────────────────────────────────────────
 function setSyncing(on) {
-  const dot = document.getElementById('syncDot');
-  const lbl = document.getElementById('syncLabel');
-  if (on) { dot.className = 'sync-dot syncing'; lbl.textContent = 'SYNCING'; }
-  else     { dot.className = 'sync-dot'; lbl.textContent = 'SYNCED'; }
+  document.getElementById('syncDot').className = 'sync-dot' + (on?' syncing':'');
+  document.getElementById('syncLabel').textContent = on ? 'SYNCING' : 'SYNCED';
 }
 
-// ─── CLOUD SYNC ──────────────────────────────────────────────────────────────
 async function syncFromCloud() {
   try {
-    const [objRes, sleepRes, workoutRes, jobRes, settingRes] = await Promise.all([
+    const [objR,sleepR,workR,jobR,setR] = await Promise.all([
       sb.from('objectives').select('*'),
-      sb.from('sleep_log').select('*').order('date', { ascending: false }),
-      sb.from('workout_log').select('*').order('created_at', { ascending: false }),
-      sb.from('job_apps').select('*').order('created_at', { ascending: true }),
-      sb.from('settings').select('value').eq('key', 'savings').maybeSingle(),
+      sb.from('sleep_log').select('*').order('date',{ascending:false}),
+      sb.from('workout_log').select('*').order('created_at',{ascending:false}),
+      sb.from('job_apps').select('*').order('created_at',{ascending:true}),
+      sb.from('settings').select('value').eq('key','savings').maybeSingle(),
     ]);
-
-    if (objRes.data) {
-      objRes.data.forEach(o => {
-        const map = { ledger: ledgerObjs, exit: exitObjs, edge: edgeObjs };
-        const list = map[o.section];
-        if (list) { const item = list.find(x => x.id === o.obj_id); if (item) item.done = o.done; }
-      });
-    }
-    if (sleepRes.data)   sleepLog   = sleepRes.data;
-    if (workoutRes.data) workoutLog = workoutRes.data.map(e => ({ ...e, group: e.muscle_group, setNum: e.set_num }));
-    if (jobRes.data)     jobApps    = jobRes.data;
-    if (settingRes.data) savings    = parseFloat(settingRes.data.value) || 0;
-  } catch(e) {
-    console.warn('Supabase sync failed, working offline:', e);
-  }
+    if (objR.data) objR.data.forEach(o => {
+      const map={ledger:ledgerObjs,exit:exitObjs,edge:edgeObjs};
+      const list=map[o.section]; if(list){const item=list.find(x=>x.id===o.obj_id);if(item)item.done=o.done;}
+    });
+    if (sleepR.data)  sleepLog   = sleepR.data;
+    if (workR.data)   workoutLog = workR.data.map(e=>({...e,group:e.muscle_group,setNum:e.set_num}));
+    if (jobR.data)    jobApps    = jobR.data;
+    if (setR.data)    savings    = parseFloat(setR.data.value)||0;
+  } catch(e) { console.warn('Offline mode',e); }
 }
 
-// ─── XP + RANK ───────────────────────────────────────────────────────────────
-function totalXP() {
-  return [...ledgerObjs, ...exitObjs, ...edgeObjs].filter(o => o.done).reduce((s, o) => s + o.xp, 0);
-}
-function currentRankIdx(xp) {
-  for (let i = RANKS.length - 1; i >= 0; i--) { if (xp >= RANKS[i].xp) return i; }
-  return 0;
-}
+// ── XP + RANK ─────────────────────────────────────────────────────────────────
+function totalXP() { return [...ledgerObjs,...exitObjs,...edgeObjs].filter(o=>o.done).reduce((s,o)=>s+o.xp,0); }
+function rankIdx(xp) { for(let i=RANKS.length-1;i>=0;i--){if(xp>=RANKS[i].xp)return i;} return 0; }
+
 function updateXP() {
-  const xp = totalXP();
-  const ri = currentRankIdx(xp);
-  const rank = RANKS[ri];
-  const next = RANKS[ri + 1];
-  const pct = next ? Math.min(100, ((xp - rank.xp) / (next.xp - rank.xp)) * 100) : 100;
+  const xp=totalXP(), ri=rankIdx(xp), rank=RANKS[ri], next=RANKS[ri+1];
+  const pct=next?Math.min(100,((xp-rank.xp)/(next.xp-rank.xp))*100):100;
 
-  document.getElementById('topRank').textContent = rank.icon + ' ' + rank.name.toUpperCase();
-  document.getElementById('topXpNum').textContent = xp;
-  document.getElementById('topXpNext').textContent = next ? next.xp : '✓';
-  document.getElementById('topXpBar').style.width = pct + '%';
-  document.getElementById('hqRankIcon').textContent = rank.icon;
-  document.getElementById('hqRankTitle').textContent = rank.name.toUpperCase();
-  document.getElementById('hqRankSub').textContent = xp + ' XP earned';
-  document.getElementById('hqXpBar').style.width = pct + '%';
-  document.getElementById('hqRankNext').textContent = next ? (next.xp - xp) + ' XP to reach ' + next.name : '🌟 MAX RANK — Commander achieved';
+  // Sidebar
+  document.getElementById('sideRankIcon').textContent=rank.icon;
+  document.getElementById('sideRankName').textContent=rank.name.toUpperCase();
+  document.getElementById('sideRankXP').textContent=xp+' XP earned';
+  document.getElementById('sideRankBar').style.width=pct+'%';
+  document.getElementById('sideRankNext').textContent=next?(next.xp-xp)+' XP to '+next.name:'MAX RANK';
 
-  const el = document.getElementById('rankTable');
-  el.innerHTML = RANKS.map((r, i) => `
-    <div class="rank-row ${i===ri?'current':''} ${i<ri?'unlocked':''}">
-      <span style="font-size:18px">${r.icon}</span>
-      <span class="rank-row-name">${r.name}</span>
-      <span class="rank-row-xp">${r.xp} XP</span>
-      ${i<ri?'<span style="color:var(--accent2);font-size:12px">✓</span>':''}
+  // Topbar
+  document.getElementById('topXpNum').textContent=xp;
+  document.getElementById('topXpBar').style.width=pct+'%';
+
+  // Nav badges
+  const ledXP=ledgerObjs.filter(o=>o.done).reduce((s,o)=>s+o.xp,0);
+  const extXP=exitObjs.filter(o=>o.done).reduce((s,o)=>s+o.xp,0);
+  const edgXP=edgeObjs.filter(o=>o.done).reduce((s,o)=>s+o.xp,0);
+  if(ledXP) document.getElementById('navLedgerXP').textContent=ledXP+' XP';
+  if(extXP) document.getElementById('navExitXP').textContent=extXP+' XP';
+  if(edgXP) document.getElementById('navEdgeXP').textContent=edgXP+' XP';
+
+  // Rank table
+  document.getElementById('rankTable').innerHTML=RANKS.map((r,i)=>`
+    <div class="rank-row ${i===ri?'current':''} ${i<ri?'done':''}">
+      <div class="rank-row-emoji">${r.icon}</div>
+      <div class="rank-row-info">
+        <div class="rank-row-name">${r.name}</div>
+        <div class="rank-row-xp">${r.xp.toLocaleString()} XP</div>
+      </div>
+      ${i<ri?'<span class="rank-check">✓</span>':''}
     </div>`).join('');
 
   renderHQCards();
 }
 
-// ─── DAYS LEFT ────────────────────────────────────────────────────────────────
+// ── DAYS ──────────────────────────────────────────────────────────────────────
 function updateDays() {
-  const days = Math.max(0, Math.ceil((new Date('2026-08-10') - new Date()) / 86400000));
-  document.getElementById('daysLeft').textContent = days;
+  document.getElementById('daysLeft').textContent=Math.max(0,Math.ceil((new Date('2026-08-10')-new Date())/86400000));
 }
 
-// ─── SECTION NAV ─────────────────────────────────────────────────────────────
-function showSection(id, btn) {
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('sec-' + id).classList.add('active');
-  if (btn) btn.classList.add('active');
+// ── NAV ───────────────────────────────────────────────────────────────────────
+const PAGE_TITLES = {hq:'HQ Dashboard',ledger:'The Ledger',exit:'The Exit',iron:'The Iron',rest:'The Rest',edge:'The Edge'};
+function showSection(id,btn) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('sec-'+id).classList.add('active');
+  if(btn)btn.classList.add('active');
+  document.getElementById('topbarTitle').textContent=PAGE_TITLES[id]||'';
+  document.getElementById('sidebar').classList.remove('open');
 }
 
-// ─── CAT TAGS ────────────────────────────────────────────────────────────────
-const CAT_COLORS = { 'Audit':'purple','Bills':'orange','Insurance':'blue','Savings':'green','Resume':'blue','Job App':'orange','Interview':'yellow','Offer':'green','Cert':'purple','Night Job':'red','Kronos':'blue','NQ':'orange','Gold':'yellow','Risk':'red','Consistency':'green' };
-function catTag(cat) { return `<span class="tag tag-${CAT_COLORS[cat]||'gray'}">${cat}</span>`; }
+// ── TAGS ──────────────────────────────────────────────────────────────────────
+const CAT_C={Audit:'purple',Bills:'orange',Insurance:'blue',Savings:'green',Resume:'blue','Job App':'orange',Interview:'yellow',Offer:'green',Cert:'purple','Night Job':'red',Kronos:'blue',NQ:'orange',Gold:'yellow',Risk:'red',Consistency:'green'};
+const catTag=cat=>`<span class="tag tag-${CAT_C[cat]||'gray'}">${cat}</span>`;
 
-// ─── OBJECTIVES ──────────────────────────────────────────────────────────────
-function renderObjs(containerId, data, saveKey, pillId) {
-  const earned = data.filter(o => o.done).reduce((s,o) => s+o.xp, 0);
-  const total  = data.reduce((s,o) => s+o.xp, 0);
-  if (pillId) document.getElementById(pillId).textContent = earned + ' / ' + total + ' XP';
-  document.getElementById(containerId).innerHTML = data.map((obj, i) => `
-    <div class="obj-item ${obj.done?'done':''}" onclick="toggleObj('${saveKey}',${i})">
-      <div class="obj-check">${obj.done?'✓':''}</div>
-      <span class="obj-name">${obj.name}</span>
-      ${catTag(obj.cat)}
-      <span class="obj-xp">+${obj.xp} XP</span>
+// ── OBJECTIVES ────────────────────────────────────────────────────────────────
+function renderObjs(containerId,data,key,pillId) {
+  const earned=data.filter(o=>o.done).reduce((s,o)=>s+o.xp,0);
+  const total=data.reduce((s,o)=>s+o.xp,0);
+  if(pillId) document.getElementById(pillId).textContent=earned+' / '+total+' XP';
+  document.getElementById(containerId).innerHTML=data.map((o,i)=>`
+    <div class="obj-item ${o.done?'done':''}" onclick="toggleObj('${key}',${i})">
+      <div class="obj-check">${o.done?'✓':''}</div>
+      <span class="obj-name">${o.name}</span>
+      ${catTag(o.cat)}
+      <span class="obj-xp">+${o.xp} XP</span>
     </div>`).join('');
 }
 
-async function toggleObj(key, i) {
-  const map = { 'or_ledger':[ledgerObjs,'ledger'], 'or_exit':[exitObjs,'exit'], 'or_edge':[edgeObjs,'edge'] };
-  const [list, section] = map[key];
-  list[i].done = !list[i].done;
+async function toggleObj(key,i) {
+  const map={'or_ledger':[ledgerObjs,'ledger'],'or_exit':[exitObjs,'exit'],'or_edge':[edgeObjs,'edge']};
+  const [list,section]=map[key];
+  list[i].done=!list[i].done;
   setSyncing(true);
-  await sb.from('objectives').upsert({ section, obj_id: list[i].id, done: list[i].done }, { onConflict: 'section,obj_id' });
+  await sb.from('objectives').upsert({section,obj_id:list[i].id,done:list[i].done},{onConflict:'section,obj_id'});
   setSyncing(false);
-  if (key==='or_ledger') renderLedger();
-  if (key==='or_exit')   renderExit();
-  if (key==='or_edge')   renderEdge();
+  if(key==='or_ledger')renderLedger();
+  if(key==='or_exit')renderExit();
+  if(key==='or_edge')renderEdge();
   updateXP();
 }
 
-// ─── LEDGER ──────────────────────────────────────────────────────────────────
+// ── LEDGER ────────────────────────────────────────────────────────────────────
 function renderLedger() {
-  renderObjs('ledgerObjs', ledgerObjs, 'or_ledger', 'ledgerXpPill');
-  [['1000',1000],['2500',2500],['5000',5000],['8000',8000]].forEach(([id,target]) => {
-    const pct = Math.min(100,(savings/target)*100).toFixed(0);
-    document.getElementById('bar'+id).style.width = pct+'%';
-    document.getElementById('pct'+id).textContent = pct+'% there';
+  renderObjs('ledgerObjs',ledgerObjs,'or_ledger','ledgerXpPill');
+  [['1000',1000],['2500',2500],['5000',5000],['8000',8000]].forEach(([id,t])=>{
+    const pct=Math.min(100,(savings/t)*100).toFixed(0);
+    document.getElementById('bar'+id).style.width=pct+'%';
+    document.getElementById('pct'+id).textContent=pct+'% complete';
   });
-  document.getElementById('currentSavings').value = savings || '';
+  document.getElementById('currentSavings').value=savings||'';
 }
-
 async function saveSavings() {
-  savings = parseFloat(document.getElementById('currentSavings').value) || 0;
+  savings=parseFloat(document.getElementById('currentSavings').value)||0;
   setSyncing(true);
-  await sb.from('settings').upsert({ key:'savings', value: savings.toString() });
+  await sb.from('settings').upsert({key:'savings',value:savings.toString()});
   setSyncing(false);
   renderLedger();
 }
 
-// ─── EXIT ─────────────────────────────────────────────────────────────────────
+// ── EXIT ──────────────────────────────────────────────────────────────────────
 function renderExit() {
-  renderObjs('exitObjs', exitObjs, 'or_exit', 'exitXpPill');
+  renderObjs('exitObjs',exitObjs,'or_exit','exitXpPill');
   renderJobApps();
 }
-
 function renderJobApps() {
-  const el = document.getElementById('jobAppList');
-  if (!jobApps.length) { el.innerHTML = '<div class="empty-state">No job apps yet. Click + ADD to start.</div>'; return; }
-  const statuses = ['Applied','Screening','Interview','Final Round','Offer','Rejected','Withdrawn'];
-  el.innerHTML = `<table class="log-table">
+  const el=document.getElementById('jobAppList');
+  if(!jobApps.length){el.innerHTML='<div class="empty-state">No applications yet. Click "+ Add Application" to start.</div>';return;}
+  const statuses=['Applied','Screening','Interview','Final Round','Offer','Rejected','Withdrawn'];
+  el.innerHTML=`<table class="data-table">
     <thead><tr><th>COMPANY</th><th>ROLE</th><th>STATUS</th><th>LINK</th><th></th></tr></thead>
-    <tbody>${jobApps.map(a => `<tr>
-      <td><input style="background:none;border:none;color:var(--text);font-size:13px;width:100%;outline:none;border-bottom:1px dashed transparent" value="${a.company||''}" onchange="updateJobApp('${a.id}','company',this.value)" placeholder="Company name" onfocus="this.style.borderBottomColor='var(--muted)'" onblur="this.style.borderBottomColor='transparent'"></td>
-      <td><input style="background:none;border:none;color:var(--text);font-size:13px;width:100%;outline:none;border-bottom:1px dashed transparent" value="${a.role||''}" onchange="updateJobApp('${a.id}','role',this.value)" placeholder="Role title" onfocus="this.style.borderBottomColor='var(--muted)'" onblur="this.style.borderBottomColor='transparent'"></td>
-      <td><select style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:4px 8px;font-size:12px;outline:none" onchange="updateJobApp('${a.id}','status',this.value)">${statuses.map(s=>`<option ${a.status===s?'selected':''}>${s}</option>`).join('')}</select></td>
-      <td><input style="background:none;border:none;color:var(--accent);font-size:13px;width:130px;outline:none" value="${a.link||''}" onchange="updateJobApp('${a.id}','link',this.value)" placeholder="URL"></td>
-      <td><button class="delete-btn" onclick="deleteJobApp('${a.id}')">✕</button></td>
+    <tbody>${jobApps.map(a=>`<tr>
+      <td><input class="inline-input" value="${a.company||''}" onchange="updateJobApp('${a.id}','company',this.value)" placeholder="Company name"></td>
+      <td><input class="inline-input" value="${a.role||''}" onchange="updateJobApp('${a.id}','role',this.value)" placeholder="Role title"></td>
+      <td><select class="status-select" onchange="updateJobApp('${a.id}','status',this.value)">${statuses.map(s=>`<option ${a.status===s?'selected':''}>${s}</option>`).join('')}</select></td>
+      <td><input class="inline-input" style="color:var(--accent)" value="${a.link||''}" onchange="updateJobApp('${a.id}','link',this.value)" placeholder="URL"></td>
+      <td><button class="del-btn" onclick="deleteJobApp('${a.id}')">✕</button></td>
     </tr>`).join('')}</tbody>
   </table>`;
 }
-
 async function addJobApp() {
   setSyncing(true);
-  const { data } = await sb.from('job_apps').insert({ company:'', role:'', status:'Applied', link:'' }).select().single();
+  const{data}=await sb.from('job_apps').insert({company:'',role:'',status:'Applied',link:''}).select().single();
   setSyncing(false);
-  if (data) { jobApps.push(data); renderJobApps(); }
+  if(data){jobApps.push(data);renderJobApps();}
 }
-async function updateJobApp(id, field, val) {
-  const a = jobApps.find(x => x.id === id);
-  if (a) a[field] = val;
+async function updateJobApp(id,field,val) {
+  const a=jobApps.find(x=>x.id===id); if(a)a[field]=val;
   setSyncing(true);
-  await sb.from('job_apps').update({ [field]: val }).eq('id', id);
+  await sb.from('job_apps').update({[field]:val}).eq('id',id);
   setSyncing(false);
 }
 async function deleteJobApp(id) {
   setSyncing(true);
-  await sb.from('job_apps').delete().eq('id', id);
+  await sb.from('job_apps').delete().eq('id',id);
   setSyncing(false);
-  jobApps = jobApps.filter(a => a.id !== id);
+  jobApps=jobApps.filter(a=>a.id!==id);
   renderJobApps();
 }
 
-// ─── IRON ─────────────────────────────────────────────────────────────────────
-let cardioMode = false;
+// ── IRON ──────────────────────────────────────────────────────────────────────
+let cardioMode=false;
 function toggleCardio() {
-  cardioMode = !cardioMode;
-  document.getElementById('workoutForm').style.display = cardioMode ? 'none' : 'grid';
-  document.getElementById('cardioForm').style.display  = cardioMode ? 'grid' : 'none';
-  document.getElementById('cardioToggle').textContent  = cardioMode ? '← Switch to Strength mode' : 'Switch to Cardio mode →';
+  cardioMode=!cardioMode;
+  document.getElementById('workoutForm').style.display=cardioMode?'none':'grid';
+  document.getElementById('cardioForm').style.display=cardioMode?'grid':'none';
+  document.getElementById('cardioToggle').textContent=cardioMode?'⇄ Switch to Strength':'⇄ Switch to Cardio';
 }
-
-function getExerciseGroup(name) {
-  for (const [group, list] of Object.entries(EXERCISE_GROUPS)) { if (list.includes(name)) return group; }
-  return 'Other';
-}
-
+function getGroup(name){for(const[g,l]of Object.entries(EXERCISE_GROUPS)){if(l.includes(name))return g;}return'Other';}
 function loadPrevPerf() {
-  const ex   = document.getElementById('exSelect').value;
-  const setN = parseInt(document.getElementById('setNum').value) || 1;
-  const prev = workoutLog.filter(e => e.exercise === ex && e.setNum === setN && !e.cardio);
-  const lbl  = document.getElementById('prevPerfLabel');
-  if (prev.length) {
-    const last = prev[0];
-    lbl.textContent = `Last time — Set ${setN}: ${last.reps} reps @ ${last.weight} lbs`;
-  } else {
-    lbl.textContent = 'No previous data for this set';
-  }
+  const ex=document.getElementById('exSelect').value;
+  const sn=parseInt(document.getElementById('setNum').value)||1;
+  const prev=workoutLog.filter(e=>e.exercise===ex&&e.setNum===sn&&!e.cardio);
+  document.getElementById('prevPerfLabel').textContent=prev.length
+    ?`↑ Last time: ${prev[0].reps} reps @ ${prev[0].weight} lbs`
+    :'No previous data for this set';
 }
-
 async function logSet() {
-  const exercise = document.getElementById('exSelect').value;
-  const setNum   = parseInt(document.getElementById('setNum').value);
-  const reps     = parseInt(document.getElementById('setReps').value);
-  const weight   = parseFloat(document.getElementById('setWeight').value) || 0;
-  const date     = document.getElementById('setDate').value || today();
-  if (!reps) { alert('Enter reps'); return; }
-  const btn = document.getElementById('logSetBtn');
-  btn.disabled = true; btn.textContent = '...';
+  const exercise=document.getElementById('exSelect').value;
+  const setNum=parseInt(document.getElementById('setNum').value);
+  const reps=parseInt(document.getElementById('setReps').value);
+  const weight=parseFloat(document.getElementById('setWeight').value)||0;
+  const date=document.getElementById('setDate').value||today();
+  if(!reps){alert('Enter reps');return;}
+  const btn=document.getElementById('logSetBtn');
+  btn.disabled=true;btn.textContent='...';
   setSyncing(true);
-  const { data } = await sb.from('workout_log').insert({ exercise, muscle_group: getExerciseGroup(exercise), set_num: setNum, reps, weight, date, cardio: false }).select().single();
-  setSyncing(false);
-  btn.disabled = false; btn.textContent = 'LOG';
-  if (data) { workoutLog.unshift({ ...data, group: data.muscle_group, setNum: data.set_num }); }
-  document.getElementById('setNum').value = setNum + 1;
-  loadPrevPerf();
-  renderWorkoutHistory();
-  renderMuscleBalance();
+  const{data}=await sb.from('workout_log').insert({exercise,muscle_group:getGroup(exercise),set_num:setNum,reps,weight,date,cardio:false}).select().single();
+  setSyncing(false);btn.disabled=false;btn.textContent='LOG';
+  if(data)workoutLog.unshift({...data,group:data.muscle_group,setNum:data.set_num});
+  document.getElementById('setNum').value=setNum+1;
+  loadPrevPerf();renderWorkoutHistory();renderMuscleBalance();
 }
-
 async function logCardio() {
-  const exercise = document.getElementById('cardioEx').value;
-  const miles    = parseFloat(document.getElementById('cardioMiles').value);
-  const date     = document.getElementById('cardioDate').value || today();
-  if (!miles) { alert('Enter miles'); return; }
-  const btn = document.getElementById('logCardioBtn');
-  btn.disabled = true; btn.textContent = '...';
+  const exercise=document.getElementById('cardioEx').value;
+  const miles=parseFloat(document.getElementById('cardioMiles').value);
+  const date=document.getElementById('cardioDate').value||today();
+  if(!miles){alert('Enter miles');return;}
+  const btn=document.getElementById('logCardioBtn');
+  btn.disabled=true;btn.textContent='...';
   setSyncing(true);
-  const { data } = await sb.from('workout_log').insert({ exercise, muscle_group: 'Cardio', miles, date, cardio: true }).select().single();
-  setSyncing(false);
-  btn.disabled = false; btn.textContent = 'LOG';
-  if (data) { workoutLog.unshift({ ...data, group: 'Cardio' }); }
-  renderWorkoutHistory();
-  renderMuscleBalance();
+  const{data}=await sb.from('workout_log').insert({exercise,muscle_group:'Cardio',miles,date,cardio:true}).select().single();
+  setSyncing(false);btn.disabled=false;btn.textContent='LOG';
+  if(data)workoutLog.unshift({...data,group:'Cardio'});
+  renderWorkoutHistory();renderMuscleBalance();
 }
-
 async function deleteWorkout(id) {
   setSyncing(true);
-  await sb.from('workout_log').delete().eq('id', id);
+  await sb.from('workout_log').delete().eq('id',id);
   setSyncing(false);
-  workoutLog = workoutLog.filter(e => e.id !== id);
-  renderWorkoutHistory();
-  renderMuscleBalance();
+  workoutLog=workoutLog.filter(e=>e.id!==id);
+  renderWorkoutHistory();renderMuscleBalance();
 }
-
 function renderMuscleBalance() {
-  const groups = ['Chest','Back','Shoulders','Biceps','Triceps','Legs','Core','Cardio'];
-  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 7);
-  const recent = workoutLog.filter(e => new Date(e.date) >= cutoff);
-  document.getElementById('muscleGrid').innerHTML = groups.map(g => {
-    const sets = recent.filter(e => e.group === g || e.muscle_group === g).length;
-    const pct  = Math.min(100, (sets/10)*100);
-    const cls  = sets < 5 ? 'm-red' : sets < 10 ? 'm-yellow' : 'm-green';
-    return `<div class="muscle-card ${cls}">
+  const groups=['Chest','Back','Shoulders','Biceps','Triceps','Legs','Core','Cardio'];
+  const cutoff=new Date();cutoff.setDate(cutoff.getDate()-7);
+  const recent=workoutLog.filter(e=>new Date(e.date)>=cutoff);
+  document.getElementById('muscleGrid').innerHTML=groups.map(g=>{
+    const sets=recent.filter(e=>(e.group||e.muscle_group)===g).length;
+    const pct=Math.min(100,(sets/10)*100);
+    const cls=sets<5?'m-red':sets<10?'m-yellow':'m-green';
+    return`<div class="muscle-card ${cls}">
       <div class="muscle-name">${g.toUpperCase()}</div>
-      <div class="muscle-sets">${sets}</div>
+      <div class="muscle-num">${sets}</div>
       <div class="muscle-bar-wrap"><div class="muscle-bar" style="width:${pct}%"></div></div>
-      <div style="font-size:10px;color:var(--muted);margin-top:4px">${sets}/10 sets</div>
+      <div class="muscle-sub">${sets}/10 sets</div>
     </div>`;
   }).join('');
 }
-
 function renderWorkoutHistory() {
-  const filter   = document.getElementById('filterEx').value;
-  const filtered = filter ? workoutLog.filter(e => e.exercise === filter) : workoutLog;
-  const el = document.getElementById('workoutHistory');
-  if (!filtered.length) { el.innerHTML = '<div class="empty-state">No entries yet.</div>'; return; }
-  el.innerHTML = `<table class="log-table">
+  const filter=document.getElementById('filterEx').value;
+  const filtered=filter?workoutLog.filter(e=>e.exercise===filter):workoutLog;
+  const el=document.getElementById('workoutHistory');
+  if(!filtered.length){el.innerHTML='<div class="empty-state">No entries yet. Log your first set above.</div>';return;}
+  el.innerHTML=`<table class="data-table">
     <thead><tr><th>DATE</th><th>EXERCISE</th><th>GROUP</th><th>SET</th><th>REPS</th><th>WEIGHT</th><th>MILES</th><th></th></tr></thead>
-    <tbody>${filtered.slice(0,60).map(e => `<tr>
-      <td>${e.date}</td>
-      <td>${e.exercise}</td>
+    <tbody>${filtered.slice(0,60).map(e=>`<tr>
+      <td>${e.date}</td><td>${e.exercise}</td>
       <td><span class="tag tag-gray">${e.group||e.muscle_group}</span></td>
       <td>${e.cardio?'—':e.setNum||e.set_num}</td>
       <td>${e.cardio?'—':e.reps}</td>
       <td>${e.cardio?'—':(e.weight||0)+' lbs'}</td>
-      <td>${e.cardio?(e.miles+' mi'):'—'}</td>
-      <td><button class="delete-btn" onclick="deleteWorkout('${e.id}')">✕</button></td>
+      <td>${e.cardio?e.miles+' mi':'—'}</td>
+      <td><button class="del-btn" onclick="deleteWorkout('${e.id}')">✕</button></td>
     </tr>`).join('')}</tbody>
   </table>`;
-  const allEx = [...new Set(workoutLog.map(e => e.exercise))].sort();
-  const sel = document.getElementById('filterEx');
-  const cur = sel.value;
-  sel.innerHTML = '<option value="">All exercises</option>' + allEx.map(e => `<option ${e===cur?'selected':''}>${e}</option>`).join('');
+  const allEx=[...new Set(workoutLog.map(e=>e.exercise))].sort();
+  const sel=document.getElementById('filterEx');
+  const cur=sel.value;
+  sel.innerHTML='<option value="">All exercises</option>'+allEx.map(e=>`<option ${e===cur?'selected':''}>${e}</option>`).join('');
 }
 
-// ─── REST ─────────────────────────────────────────────────────────────────────
-function calcHours(bed, wake) {
-  const [bh,bm] = bed.split(':').map(Number);
-  const [wh,wm] = wake.split(':').map(Number);
-  let mins = (wh*60+wm) - (bh*60+bm);
-  if (mins < 0) mins += 1440;
-  return (mins/60).toFixed(1);
+// ── REST ──────────────────────────────────────────────────────────────────────
+function calcHours(bed,wake) {
+  const[bh,bm]=bed.split(':').map(Number);const[wh,wm]=wake.split(':').map(Number);
+  let m=(wh*60+wm)-(bh*60+bm);if(m<0)m+=1440;return(m/60).toFixed(1);
 }
-
 async function logSleep() {
-  const date    = document.getElementById('sleepDate').value;
-  const bed     = document.getElementById('sleepBed').value;
-  const wake    = document.getElementById('sleepWake').value;
-  const quality = document.getElementById('sleepQuality').value;
-  if (!date||!bed||!wake) { alert('Fill in all fields'); return; }
-  const hours = calcHours(bed, wake);
-  const btn = document.getElementById('logSleepBtn');
-  btn.disabled = true; btn.textContent = '...';
+  const date=document.getElementById('sleepDate').value;
+  const bed=document.getElementById('sleepBed').value;
+  const wake=document.getElementById('sleepWake').value;
+  const quality=document.getElementById('sleepQuality').value;
+  if(!date||!bed||!wake){alert('Fill in all fields');return;}
+  const hours=calcHours(bed,wake);
+  const btn=document.getElementById('logSleepBtn');
+  btn.disabled=true;btn.textContent='...';
   setSyncing(true);
-  const existing = sleepLog.find(e => e.date === date);
-  if (existing) {
-    if (!confirm('Entry for this date exists. Overwrite?')) { btn.disabled=false; btn.textContent='LOG'; setSyncing(false); return; }
-    await sb.from('sleep_log').update({ bed, wake, hours, quality }).eq('id', existing.id);
-    const idx = sleepLog.findIndex(e => e.date === date);
-    sleepLog[idx] = { ...existing, bed, wake, hours, quality };
-  } else {
-    const { data } = await sb.from('sleep_log').insert({ date, bed, wake, hours, quality }).select().single();
-    if (data) sleepLog.push(data);
+  const existing=sleepLog.find(e=>e.date===date);
+  if(existing){
+    if(!confirm('Entry for this date exists. Overwrite?')){btn.disabled=false;btn.textContent='LOG';setSyncing(false);return;}
+    await sb.from('sleep_log').update({bed,wake,hours,quality}).eq('id',existing.id);
+    const idx=sleepLog.findIndex(e=>e.date===date);
+    sleepLog[idx]={...existing,bed,wake,hours,quality};
+  }else{
+    const{data}=await sb.from('sleep_log').insert({date,bed,wake,hours,quality}).select().single();
+    if(data)sleepLog.push(data);
   }
-  setSyncing(false);
-  btn.disabled = false; btn.textContent = 'LOG';
-  sleepLog.sort((a,b) => b.date.localeCompare(a.date));
+  setSyncing(false);btn.disabled=false;btn.textContent='LOG';
+  sleepLog.sort((a,b)=>b.date.localeCompare(a.date));
   renderSleep();
 }
-
 async function deleteSleep(id) {
   setSyncing(true);
-  await sb.from('sleep_log').delete().eq('id', id);
+  await sb.from('sleep_log').delete().eq('id',id);
   setSyncing(false);
-  sleepLog = sleepLog.filter(e => e.id !== id);
+  sleepLog=sleepLog.filter(e=>e.id!==id);
   renderSleep();
 }
-
 function renderSleep() {
-  const body  = document.getElementById('sleepLogBody');
-  const empty = document.getElementById('sleepEmpty');
-  empty.style.display = sleepLog.length ? 'none' : 'block';
-  const qClass = { Poor:'q-poor', Fair:'q-fair', Good:'q-good', Great:'q-great' };
-  body.innerHTML = sleepLog.map(e => `<tr>
+  const body=document.getElementById('sleepLogBody');
+  document.getElementById('sleepEmpty').style.display=sleepLog.length?'none':'block';
+  const qC={Poor:'q-poor',Fair:'q-fair',Good:'q-good',Great:'q-great'};
+  body.innerHTML=sleepLog.map(e=>`<tr>
     <td>${e.date}</td><td>${e.bed}</td><td>${e.wake}</td>
-    <td style="color:var(--accent2);font-weight:700">${e.hours}h</td>
-    <td><span class="quality-badge ${qClass[e.quality]||''}">${e.quality}</span></td>
-    <td><button class="delete-btn" onclick="deleteSleep('${e.id}')">✕</button></td>
+    <td style="font-family:var(--mono);color:var(--accent2);font-weight:700">${e.hours}h</td>
+    <td><span class="quality-badge ${qC[e.quality]||''}">${e.quality}</span></td>
+    <td><button class="del-btn" onclick="deleteSleep('${e.id}')">✕</button></td>
   </tr>`).join('');
-
-  let streak = 0;
-  const now = new Date();
-  for (let d = 0; d < 365; d++) {
-    const check = new Date(now); check.setDate(now.getDate() - d);
-    if (sleepLog.find(e => e.date === check.toISOString().split('T')[0])) streak++;
-    else if (d > 0) break;
+  let streak=0;const now=new Date();
+  for(let d=0;d<365;d++){
+    const c=new Date(now);c.setDate(now.getDate()-d);
+    if(sleepLog.find(e=>e.date===c.toISOString().split('T')[0]))streak++;
+    else if(d>0)break;
   }
-  document.getElementById('sleepStreak').textContent = streak;
-  const last7 = sleepLog.slice(0,7);
-  if (last7.length) {
-    const avg = (last7.reduce((s,e) => s + parseFloat(e.hours), 0) / last7.length).toFixed(1);
-    document.getElementById('avgSleep').textContent = avg + 'h';
-  }
+  document.getElementById('sleepStreak').textContent=streak;
+  const l7=sleepLog.slice(0,7);
+  if(l7.length)document.getElementById('avgSleep').textContent=(l7.reduce((s,e)=>s+parseFloat(e.hours),0)/l7.length).toFixed(1)+'h';
 }
 
-// ─── EDGE ─────────────────────────────────────────────────────────────────────
-function renderEdge() { renderObjs('edgeObjs', edgeObjs, 'or_edge', 'edgeXpPill'); }
+// ── EDGE ──────────────────────────────────────────────────────────────────────
+function renderEdge(){renderObjs('edgeObjs',edgeObjs,'or_edge','edgeXpPill');}
 
-// ─── HQ CARDS ────────────────────────────────────────────────────────────────
+// ── HQ CARDS ─────────────────────────────────────────────────────────────────
 function renderHQCards() {
-  const sections = [
-    { id:'ledger', name:'THE LEDGER', sub:'Finance',  objs:ledgerObjs, color:'var(--accent2)' },
-    { id:'exit',   name:'THE EXIT',   sub:'Career',   objs:exitObjs,   color:'var(--accent)'  },
-    { id:'edge',   name:'THE EDGE',   sub:'Trading',  objs:edgeObjs,   color:'var(--warn)'    },
-  ];
-  const btns = document.querySelectorAll('.nav-btn');
-  const navMap = { hq:0, ledger:1, exit:2, iron:3, rest:4, edge:5 };
-  function goTo(id) {
-    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  const navBtns=document.querySelectorAll('.nav-btn');
+  function goTo(id){
+    document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+    navBtns.forEach(b=>b.classList.remove('active'));
     document.getElementById('sec-'+id).classList.add('active');
-    btns[navMap[id]].classList.add('active');
+    const map={hq:0,ledger:1,exit:2,iron:3,rest:4,edge:5};
+    if(map[id]!==undefined)navBtns[map[id]].classList.add('active');
+    document.getElementById('topbarTitle').textContent=PAGE_TITLES[id]||'';
   }
-  const el = document.getElementById('hqGrid');
-  el.innerHTML = sections.map(s => {
-    const done = s.objs.filter(o=>o.done).length;
-    const total = s.objs.length;
-    const pct = total ? (done/total)*100 : 0;
-    const earnedXP = s.objs.filter(o=>o.done).reduce((sum,o)=>sum+o.xp,0);
-    return `<div class="hq-card" onclick="(${goTo.toString()})('${s.id}')">
-      <div class="hq-card-title">${s.sub.toUpperCase()}</div>
+  const sections=[
+    {id:'ledger',name:'The Ledger',sub:'Finance',   objs:ledgerObjs,color:'var(--accent2)'},
+    {id:'exit',  name:'The Exit',  sub:'Career',    objs:exitObjs,  color:'var(--accent)'},
+    {id:'edge',  name:'The Edge',  sub:'Trading',   objs:edgeObjs,  color:'var(--warn)'},
+  ];
+  const el=document.getElementById('hqGrid');
+  el.innerHTML=sections.map(s=>{
+    const done=s.objs.filter(o=>o.done).length,total=s.objs.length;
+    const pct=total?(done/total)*100:0;
+    const xpE=s.objs.filter(o=>o.done).reduce((a,o)=>a+o.xp,0);
+    return`<div class="hq-card" onclick="(${goTo.toString()})('${s.id}')">
+      <div class="hq-card-eyebrow">${s.sub.toUpperCase()}</div>
       <div class="hq-card-name">${s.name}</div>
-      <div class="hq-progress-wrap"><div class="hq-progress" style="width:${pct}%;background:${s.color}"></div></div>
-      <div class="hq-stats"><span>${done}/${total} objectives</span><span style="color:${s.color}">${earnedXP} XP</span></div>
+      <div class="hq-prog-wrap"><div class="hq-prog" style="width:${pct}%;background:${s.color}"></div></div>
+      <div class="hq-card-footer"><span>${done}/${total} objectives</span><span class="hq-card-xp" style="color:${s.color}">${xpE} XP</span></div>
     </div>`;
   }).join('');
-
-  const sleepStreak = parseInt(document.getElementById('sleepStreak').textContent) || 0;
-  const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-7);
-  const workoutThisWeek = workoutLog.filter(e => new Date(e.date) >= cutoff).length;
-
-  el.innerHTML += `
+  const cutoff=new Date();cutoff.setDate(cutoff.getDate()-7);
+  const wkSets=workoutLog.filter(e=>new Date(e.date)>=cutoff).length;
+  const streak=parseInt(document.getElementById('sleepStreak').textContent)||0;
+  el.innerHTML+=`
     <div class="hq-card" onclick="(${goTo.toString()})('rest')">
-      <div class="hq-card-title">SLEEP</div><div class="hq-card-name">THE REST</div>
-      <div style="font-size:36px;font-weight:700;color:var(--accent);margin:8px 0">${sleepStreak}</div>
-      <div class="hq-stats"><span>day streak</span><span>${sleepLog.length} entries</span></div>
+      <div class="hq-card-eyebrow">SLEEP</div>
+      <div class="hq-card-name">The Rest</div>
+      <div style="font-family:var(--mono);font-size:40px;font-weight:700;color:var(--accent);margin:12px 0;line-height:1">${streak}</div>
+      <div class="hq-card-footer"><span>day streak</span><span>${sleepLog.length} entries</span></div>
     </div>
     <div class="hq-card" onclick="(${goTo.toString()})('iron')">
-      <div class="hq-card-title">GYM</div><div class="hq-card-name">THE IRON</div>
-      <div style="font-size:36px;font-weight:700;color:var(--danger);margin:8px 0">${workoutThisWeek}</div>
-      <div class="hq-stats"><span>sets this week</span><span>${workoutLog.length} total</span></div>
+      <div class="hq-card-eyebrow">GYM</div>
+      <div class="hq-card-name">The Iron</div>
+      <div style="font-family:var(--mono);font-size:40px;font-weight:700;color:var(--danger);margin:12px 0;line-height:1">${wkSets}</div>
+      <div class="hq-card-footer"><span>sets this week</span><span>${workoutLog.length} total</span></div>
     </div>`;
 }
 
-// ─── UTILS ────────────────────────────────────────────────────────────────────
-function today() { return new Date().toISOString().split('T')[0]; }
+// ── UTILS ─────────────────────────────────────────────────────────────────────
+const today=()=>new Date().toISOString().split('T')[0];
 
-// ─── INIT ─────────────────────────────────────────────────────────────────────
+// ── INIT ──────────────────────────────────────────────────────────────────────
 async function init() {
-  document.getElementById('sleepDate').value  = today();
-  document.getElementById('setDate').value    = today();
-  document.getElementById('cardioDate').value = today();
+  document.getElementById('sleepDate').value=today();
+  document.getElementById('setDate').value=today();
+  document.getElementById('cardioDate').value=today();
   updateDays();
   await syncFromCloud();
-  renderLedger();
-  renderExit();
-  renderEdge();
-  renderSleep();
-  renderMuscleBalance();
-  renderWorkoutHistory();
+  renderLedger();renderExit();renderEdge();renderSleep();renderMuscleBalance();renderWorkoutHistory();
   updateXP();
   document.getElementById('loadingOverlay').classList.add('hidden');
 }
-
 init();
 </script>
 </body>
