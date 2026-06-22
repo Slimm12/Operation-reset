@@ -723,11 +723,6 @@ table.dt tbody tr:hover td { background: var(--card2); }
                 <div class="rl-val"><span id="srWeekVal">--</span> <span class="rl-goal">/ 8h goal</span></div>
               </div>
             </div>
-            <div style="margin-top:20px">
-              <div class="card-label" style="margin-bottom:4px">STREAK</div>
-              <div style="font-family:var(--mono);font-size:32px;font-weight:500;color:var(--p2)" id="sleepStreak">0</div>
-              <div style="font-size:11px;color:var(--muted);margin-top:2px">consecutive nights</div>
-            </div>
           </div>
         </div>
       </div>
@@ -902,7 +897,6 @@ function go(id,el,mobId){
 function renderBento(){
   const cut=new Date();cut.setDate(cut.getDate()-7);
   const wkSets=wkLog.filter(e=>new Date(e.date)>=cut).length;
-  const streak=parseInt(document.getElementById('sleepStreak').textContent)||0;
   const secs=[
     {id:'ledger',lbl:'FINANCE',name:'The Ledger',objs:ledObjs,color:'var(--g)'},
     {id:'exit',  lbl:'CAREER', name:'The Exit',  objs:exitObjs,color:'var(--p2)'},
@@ -923,8 +917,8 @@ function renderBento(){
     <div class="bento-card" onclick="go('rest')">
       <div class="bc-accent" style="background:var(--p)"></div>
       <div class="bc-label">SLEEP</div><div class="bc-name">The Rest</div>
-      <div class="bc-big" style="color:var(--p2)">${streak}</div>
-      <div class="bc-foot"><span>day streak</span><span style="font-family:var(--mono);color:var(--muted)">${sleepLog.length} entries</span></div>
+      <div class="bc-big" style="color:var(--p2)">${sleepLog.length>0?(sleepLog.slice(0,7).reduce((s,e)=>s+parseFloat(e.hours),0)/Math.min(sleepLog.length,7)).toFixed(1)+'h':'—'}</div>
+      <div class="bc-foot"><span>7-day avg</span><span style="font-family:var(--mono);color:var(--muted)">${sleepLog.length} entries</span></div>
     </div>
     <div class="bento-card" onclick="go('iron')">
       <div class="bc-accent" style="background:var(--r)"></div>
@@ -1167,7 +1161,7 @@ function renderSleepRings(){
   const nightH=entry?parseFloat(entry.hours):0;
   const goalH=8;
   const ref=new Date(sleepViewDay+'T12:00:00');
-  const dow=ref.getDay();const weekStart=new Date(ref);weekStart.setDate(ref.getDate()-(dow===0?6:dow-1));
+  const dow=ref.getDay();const weekStart=new Date(ref);weekStart.setDate(ref.getDate()-dow);
   const weekDates=Array.from({length:7},(_,i)=>{const d=new Date(weekStart);d.setDate(weekStart.getDate()+i);return d.toISOString().split('T')[0];});
   const weekEntries=sleepLog.filter(e=>weekDates.includes(e.date));
   const weekAvg=weekEntries.length?(weekEntries.reduce((s,e)=>s+parseFloat(e.hours),0)/weekEntries.length):0;
@@ -1218,9 +1212,6 @@ function renderSleep(){
     <td><span class="qbadge ${qm[e.quality]||''}">${e.quality}</span></td>
     <td><button class="del" onclick="delSleep('${e.id}')">✕</button></td>
   </tr>`).join('');
-  let streak=0;const now=new Date();
-  for(let d=0;d<365;d++){const c=new Date(now);c.setDate(now.getDate()-d);if(sleepLog.find(e=>e.date===c.toISOString().split('T')[0]))streak++;else if(d>0)break;}
-  const sk=document.getElementById('sleepStreak');if(sk)sk.textContent=streak;
 }
 
 // ── EDGE ──────────────────────────────────────────────────────────────────────
