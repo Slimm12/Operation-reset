@@ -560,76 +560,73 @@ table.dt tbody tr:hover td { background: var(--card2); }
         <div class="pg-title">The <em>Iron</em></div>
       </div>
 
-      <!-- FITNESS RINGS + TODAY SUMMARY -->
-      <div class="card rings-card">
-        <div class="rings-left">
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
-            <button class="btn btn-ghost btn-sm" onclick="shiftRingWeek(-1)">‹</button>
-            <div style="text-align:center;min-width:90px">
-              <div class="card-label" id="ringWeekLabel">THIS WEEK</div>
-              <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:2px" id="ringWeekRange"></div>
-            </div>
-            <button class="btn btn-ghost btn-sm" onclick="shiftRingWeek(1)" id="ringNextBtn">›</button>
+      <!-- DAY VIEW: RINGS + LOG (shared date nav) -->
+      <div class="card" style="margin-bottom:18px">
+        <!-- Date nav header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+          <button class="btn btn-ghost btn-sm" onclick="shiftDay(-1)">‹ Prev</button>
+          <div style="text-align:center">
+            <div class="card-label" id="dayNavLabel">TODAY</div>
+            <div style="font-size:15px;font-weight:700;margin-top:2px" id="dayNavDate"></div>
           </div>
-          <div class="rings-wrap">
-            <svg viewBox="0 0 220 220" width="220" height="220">
-              <!-- Steps ring (outer) -->
-              <circle cx="110" cy="110" r="100" fill="none" stroke="#ffffff08" stroke-width="14"/>
-              <circle id="rSteps" cx="110" cy="110" r="100" fill="none" stroke="var(--r)" stroke-width="14"
-                stroke-linecap="round" stroke-dasharray="628.3" stroke-dashoffset="628.3"
-                transform="rotate(-90 110 110)" style="transition:stroke-dashoffset 1s ease"/>
-              <!-- Sets ring (middle) -->
-              <circle cx="110" cy="110" r="76" fill="none" stroke="#ffffff08" stroke-width="14"/>
-              <circle id="rSets" cx="110" cy="110" r="76" fill="none" stroke="var(--g)" stroke-width="14"
-                stroke-linecap="round" stroke-dasharray="477.5" stroke-dashoffset="477.5"
-                transform="rotate(-90 110 110)" style="transition:stroke-dashoffset 1s ease"/>
-              <!-- Days ring (inner) -->
-              <circle cx="110" cy="110" r="52" fill="none" stroke="#ffffff08" stroke-width="14"/>
-              <circle id="rDays" cx="110" cy="110" r="52" fill="none" stroke="var(--p2)" stroke-width="14"
-                stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="326.7"
-                transform="rotate(-90 110 110)" style="transition:stroke-dashoffset 1s ease"/>
-            </svg>
-          </div>
+          <button class="btn btn-ghost btn-sm" onclick="shiftDay(1)" id="dayNextBtn">Next ›</button>
         </div>
-        <div class="rings-right">
-          <div class="ring-legend">
-            <div class="rl-dot" style="background:var(--r)"></div>
-            <div>
-              <div class="rl-label">STEPS <span id="rStepsDay"></span></div>
-              <div class="rl-val"><span id="rStepsVal">0</span> <span class="rl-goal">/ 15,000</span></div>
-            </div>
-          </div>
-          <div class="ring-legend">
-            <div class="rl-dot" style="background:var(--g)"></div>
-            <div>
-              <div class="rl-label">SETS THIS WEEK</div>
-              <div class="rl-val"><span id="rSetsVal">0</span> <span class="rl-goal">/ 20</span></div>
-            </div>
-          </div>
-          <div class="ring-legend">
-            <div class="rl-dot" style="background:var(--p2)"></div>
-            <div>
-              <div class="rl-label">WORKOUT DAYS</div>
-              <div class="rl-val"><span id="rDaysVal">0</span> <span class="rl-goal">/ 4</span></div>
-            </div>
-          </div>
-          <div style="margin-top:24px">
-            <div class="card-label" style="margin-bottom:10px">STEPS TODAY</div>
-            <div style="display:flex;gap:10px;align-items:center">
-              <div class="fg" style="margin:0;flex:1"><input type="number" id="stepsInput" placeholder="e.g. 8500" min="0" style="width:100%"></div>
-              <button class="btn btn-sm" onclick="logSteps()">SAVE</button>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      <!-- TODAY'S WORKOUT LOG -->
-      <div class="card">
-        <div class="card-head">
-          <div class="card-label" id="todayLabel">TODAY'S WORKOUT</div>
-          <div class="fg" style="margin:0"><input type="date" id="viewDate" style="width:auto;padding:8px 12px;font-size:12px" onchange="renderTodayLog()"></div>
+        <!-- Rings + legend side by side -->
+        <div class="rings-card" style="margin-bottom:24px">
+          <div class="rings-left">
+            <div class="rings-wrap">
+              <svg viewBox="0 0 220 220" width="200" height="200">
+                <circle cx="110" cy="110" r="100" fill="none" stroke="#ffffff08" stroke-width="14"/>
+                <circle id="rSteps" cx="110" cy="110" r="100" fill="none" stroke="var(--r)" stroke-width="14"
+                  stroke-linecap="round" stroke-dasharray="628.3" stroke-dashoffset="628.3"
+                  transform="rotate(-90 110 110)" style="transition:stroke-dashoffset 1s ease"/>
+                <circle cx="110" cy="110" r="76" fill="none" stroke="#ffffff08" stroke-width="14"/>
+                <circle id="rSets" cx="110" cy="110" r="76" fill="none" stroke="var(--g)" stroke-width="14"
+                  stroke-linecap="round" stroke-dasharray="477.5" stroke-dashoffset="477.5"
+                  transform="rotate(-90 110 110)" style="transition:stroke-dashoffset 1s ease"/>
+                <circle cx="110" cy="110" r="52" fill="none" stroke="#ffffff08" stroke-width="14"/>
+                <circle id="rMuscles" cx="110" cy="110" r="52" fill="none" stroke="var(--p2)" stroke-width="14"
+                  stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="326.7"
+                  transform="rotate(-90 110 110)" style="transition:stroke-dashoffset 1s ease"/>
+              </svg>
+            </div>
+          </div>
+          <div class="rings-right">
+            <div class="ring-legend">
+              <div class="rl-dot" style="background:var(--r)"></div>
+              <div>
+                <div class="rl-label">STEPS</div>
+                <div class="rl-val"><span id="rStepsVal">0</span> <span class="rl-goal">/ 15,000</span></div>
+              </div>
+            </div>
+            <div class="ring-legend">
+              <div class="rl-dot" style="background:var(--g)"></div>
+              <div>
+                <div class="rl-label">SETS</div>
+                <div class="rl-val"><span id="rSetsVal">0</span> <span class="rl-goal">/ 15</span></div>
+              </div>
+            </div>
+            <div class="ring-legend">
+              <div class="rl-dot" style="background:var(--p2)"></div>
+              <div>
+                <div class="rl-label">MUSCLE GROUPS</div>
+                <div class="rl-val"><span id="rMusclesVal">0</span> <span class="rl-goal">/ 4</span></div>
+              </div>
+            </div>
+            <div style="margin-top:20px" id="stepsInputWrap">
+              <div class="card-label" style="margin-bottom:8px">LOG STEPS</div>
+              <div style="display:flex;gap:10px;align-items:center">
+                <div class="fg" style="margin:0;flex:1"><input type="number" id="stepsInput" placeholder="e.g. 12000" min="0" style="width:100%"></div>
+                <button class="btn btn-sm" onclick="logSteps()">SAVE</button>
+              </div>
+            </div>
+          </div>
         </div>
-        <div id="todayLog"><div class="empty">Nothing logged yet for this day.</div></div>
+
+        <!-- That day's workout log -->
+        <div class="card-label" style="margin-bottom:12px">WORKOUTS LOGGED</div>
+        <div id="todayLog"><div class="empty">Nothing logged for this day.</div></div>
       </div>
 
       <!-- LOG A SET -->
@@ -668,12 +665,6 @@ table.dt tbody tr:hover td { background: var(--card2); }
           <div class="fg"><label>DATE</label><input type="date" id="customDate"></div>
           <div style="padding-top:24px"><button class="btn" id="logCustomBtn" onclick="logCustom()">LOG</button></div>
         </div>
-      </div>
-
-      <!-- HISTORY -->
-      <div class="card">
-        <div class="card-head"><div class="card-label">WORKOUT HISTORY</div></div>
-        <div id="wkHistory"></div>
       </div>
     </div>
 
@@ -971,95 +962,77 @@ async function loadSteps(){
 }
 async function logSteps(){
   const val=parseInt(document.getElementById('stepsInput').value)||0;
-  const d=today();
-  stepsData[d]=val;
+  stepsData[viewDay]=val;
   syncing(true);
-  await sb.from('settings').upsert({key:'steps_'+d,value:String(val)});
+  await sb.from('settings').upsert({key:'steps_'+viewDay,value:String(val)});
   syncing(false);
   renderRings();
 }
 
-// ── RINGS ─────────────────────────────────────────────────────────────────────
-let ringWeekOffset=0; // 0=this week, -1=last week, etc.
+// ── DAY NAV ───────────────────────────────────────────────────────────────────
+let viewDay=today();
 
-function shiftRingWeek(dir){
-  ringWeekOffset+=dir;
-  if(ringWeekOffset>0)ringWeekOffset=0;
+function shiftDay(dir){
+  const d=new Date(viewDay+'T12:00:00');
+  d.setDate(d.getDate()+dir);
+  if(d>new Date())return;
+  viewDay=d.toISOString().split('T')[0];
+  renderDayView();
+}
+
+function renderDayView(){
+  const isToday=viewDay===today();
+  const d=new Date(viewDay+'T12:00:00');
+  const label=isToday?'TODAY':d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+  document.getElementById('dayNavLabel').textContent=isToday?'TODAY':'';
+  document.getElementById('dayNavDate').textContent=isToday
+    ? d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})
+    : d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  document.getElementById('dayNextBtn').disabled=isToday;
+  document.getElementById('dayNextBtn').style.opacity=isToday?'0.3':'1';
+
+  // show/hide steps input (only editable for today)
+  document.getElementById('stepsInputWrap').style.display=isToday?'block':'none';
+
   renderRings();
+  renderTodayLog();
 }
-
-function getWeekBounds(offset){
-  const now=new Date();
-  const sun=new Date(now);
-  sun.setDate(now.getDate()-now.getDay()+offset*7);
-  sun.setHours(0,0,0,0);
-  const sat=new Date(sun);sat.setDate(sun.getDate()+6);
-  return{start:sun,end:sat};
-}
-
-function fmtDate(d){return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});}
 
 function renderRings(){
-  const STEPS_GOAL=15000, SETS_GOAL=20, DAYS_GOAL=4;
+  const STEPS_GOAL=15000, SETS_GOAL=15, MUSCLES_GOAL=4;
+  const steps=stepsData[viewDay]||0;
+  const entries=wkLog.filter(e=>e.date===viewDay);
+  const totalSets=entries.length;
+  const muscles=[...new Set(entries.map(e=>e.muscle_group||e.group).filter(Boolean))].length;
 
-  const{start,end}=getWeekBounds(ringWeekOffset);
-  const isCurrentWeek=ringWeekOffset===0;
-
-  // Label
-  document.getElementById('ringWeekLabel').textContent=isCurrentWeek?'THIS WEEK':'WEEK OF';
-  document.getElementById('ringWeekRange').textContent=fmtDate(start)+' – '+fmtDate(end);
-  document.getElementById('ringNextBtn').disabled=isCurrentWeek;
-  document.getElementById('ringNextBtn').style.opacity=isCurrentWeek?'0.3':'1';
-
-  // Steps: show the last day of the week that has data, or today if current week
-  const daysInWeek=[];
-  for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);daysInWeek.push(d.toISOString().split('T')[0]);}
-  const stepsDay=isCurrentWeek?today():daysInWeek.filter(d=>stepsData[d]).pop()||daysInWeek[6];
-  const steps=stepsData[stepsDay]||0;
-  document.getElementById('rStepsDay').textContent=isCurrentWeek?'TODAY':'('+fmtDate(new Date(stepsDay+' 12:00'))+')';
   document.getElementById('rStepsVal').textContent=steps.toLocaleString();
-  if(isCurrentWeek&&steps)document.getElementById('stepsInput').value=steps;
-
-  // Sets + days: filter wkLog for this week's date range
-  const startStr=start.toISOString().split('T')[0];
-  const endStr=end.toISOString().split('T')[0];
-  const weekEntries=wkLog.filter(e=>e.date>=startStr&&e.date<=endStr);
-  const totalSets=weekEntries.length;
-  const workoutDays=[...new Set(weekEntries.map(e=>e.date))].length;
-
   document.getElementById('rSetsVal').textContent=totalSets;
-  document.getElementById('rDaysVal').textContent=workoutDays;
+  document.getElementById('rMusclesVal').textContent=muscles;
+  if(stepsData[viewDay])document.getElementById('stepsInput').value=stepsData[viewDay];
+  else document.getElementById('stepsInput').value='';
 
-  // Animate rings
   document.getElementById('rSteps').style.strokeDashoffset=628.3*(1-Math.min(1,steps/STEPS_GOAL));
   document.getElementById('rSets').style.strokeDashoffset=477.5*(1-Math.min(1,totalSets/SETS_GOAL));
-  document.getElementById('rDays').style.strokeDashoffset=326.7*(1-Math.min(1,workoutDays/DAYS_GOAL));
+  document.getElementById('rMuscles').style.strokeDashoffset=326.7*(1-Math.min(1,muscles/MUSCLES_GOAL));
 }
 
-// ── TODAY LOG ─────────────────────────────────────────────────────────────────
 function renderTodayLog(){
-  const d=document.getElementById('viewDate').value||today();
-  const entries=wkLog.filter(e=>e.date===d&&e.exercise!=='Steps');
+  const entries=wkLog.filter(e=>e.date===viewDay);
   const el=document.getElementById('todayLog');
-  if(!entries.length){el.innerHTML='<div class="empty">Nothing logged yet for this day.</div>';return;}
-
-  // group by muscle group
+  if(!entries.length){el.innerHTML='<div class="empty">Nothing logged for this day.</div>';return;}
   const groups={};
   entries.forEach(e=>{
     const g=e.muscle_group||e.group||'Other';
     if(!groups[g])groups[g]=[];
     groups[g].push(e);
   });
-
   el.innerHTML=Object.entries(groups).map(([grp,sets])=>`
     <div class="today-group">
       <div class="today-group-lbl">${grp.toUpperCase()}</div>
       ${sets.map(s=>`
         <div class="today-set-row">
           <span class="today-set-ex">${s.exercise}</span>
-          <span class="today-set-detail">
-            ${s.cardio?`${s.miles||0} mi`:`Set ${s.set_num||s.setNum} · ${s.reps} reps${s.weight?` · ${s.weight} lbs`:''}`}
-          </span>
+          <span class="today-set-detail">${s.cardio?`${s.miles||0} mi`:`Set ${s.set_num||s.setNum||'—'} · ${s.reps} reps${s.weight?` · ${s.weight} lbs`:''}`}</span>
           <button class="del" onclick="delWorkout('${s.id}')">✕</button>
         </div>`).join('')}
     </div>`).join('');
@@ -1093,7 +1066,7 @@ async function logSet(){
   syncing(false);btn.disabled=false;btn.textContent='LOG';
   if(data)wkLog.unshift({...data,group:data.muscle_group,setNum:data.set_num});
   document.getElementById('setN').value=setNum+1;
-  loadPrev();renderHistory();renderRings();renderTodayLog();
+  loadPrev();renderDayView();
 }
 async function logCustom(){
   const exercise=document.getElementById('customEx').value.trim();
@@ -1109,121 +1082,12 @@ async function logCustom(){
   syncing(false);btn.disabled=false;btn.textContent='LOG';
   if(data)wkLog.unshift({...data,group:'Custom',setNum:data.set_num});
   document.getElementById('customSetN').value=setNum+1;
-  renderHistory();renderRings();renderTodayLog();
-}
-
-const MG = [
-  {name:'Chest',    ico:'🫁'},
-  {name:'Back',     ico:'🏗️'},
-  {name:'Shoulders',ico:'🏋️'},
-  {name:'Biceps',   ico:'💪'},
-  {name:'Triceps',  ico:'🦾'},
-  {name:'Legs',     ico:'🦵'},
-  {name:'Core',     ico:'🎯'},
-  {name:'Cardio',   ico:'🏃'},
-];
-
-function buildDaylogGrid(){
-  document.getElementById('daylogGrid').innerHTML = MG.map(g=>`
-    <div class="dl-card" id="dlc-${g.name}" onclick="toggleDL('${g.name}')">
-      <div class="dl-check" id="dlck-${g.name}"></div>
-      <div class="dl-ico">${g.ico}</div>
-      <div class="dl-name">${g.name.toUpperCase()}</div>
-      <div class="dl-sets" id="dls-${g.name}" onclick="event.stopPropagation()">
-        <input type="number" id="dli-${g.name}" min="1" value="3"
-               placeholder="0" onclick="event.stopPropagation()">
-        <span class="dl-sets-lbl">${g.name==='Cardio'?'MILES':'SETS'}</span>
-      </div>
-    </div>`).join('');
-}
-
-function toggleDL(name){
-  const card=document.getElementById('dlc-'+name);
-  const checked=card.classList.toggle('checked');
-  document.getElementById('dlck-'+name).textContent=checked?'✓':'';
-  const hint=document.getElementById('logDayHint');
-  const count=document.querySelectorAll('.dl-card.checked').length;
-  hint.textContent=count?count+' group'+(count>1?'s':'')+' selected':'Check muscles you trained';
-  if(checked)document.getElementById('dli-'+name).focus();
-}
-
-async function logDay(){
-  const date=document.getElementById('wkDate').value||today();
-  const checked=[...document.querySelectorAll('.dl-card.checked')].map(c=>{
-    const name=c.id.replace('dlc-','');
-    const val=parseFloat(document.getElementById('dli-'+name).value)||0;
-    return{name,val};
-  }).filter(x=>x.val>0);
-  if(!checked.length){alert('Check at least one muscle group and enter sets.');return;}
-
-  const btn=document.getElementById('logDayBtn');btn.disabled=true;btn.textContent='LOGGING...';
-  syncing(true);
-
-  const rows=checked.map(({name,val})=>({
-    exercise:name,
-    muscle_group:name,
-    set_num:0,
-    reps:name==='Cardio'?0:val,
-    miles:name==='Cardio'?val:null,
-    weight:0,
-    date,
-    cardio:name==='Cardio',
-  }));
-  const{data}=await sb.from('workout_log').insert(rows).select();
-  syncing(false);btn.disabled=false;btn.textContent='LOG WORKOUT';
-
-  if(data)data.forEach(e=>wkLog.unshift({...e,group:e.muscle_group,setNum:0}));
-
-  // reset cards
-  document.querySelectorAll('.dl-card.checked').forEach(c=>{
-    const name=c.id.replace('dlc-','');
-    c.classList.remove('checked');
-    document.getElementById('dlck-'+name).textContent='';
-    document.getElementById('dli-'+name).value='3';
-  });
-  document.getElementById('logDayHint').textContent='Logged! ✓';
-  setTimeout(()=>document.getElementById('logDayHint').textContent='Check muscles you trained',2500);
-  renderHistory();renderMuscle();
+  renderDayView();
 }
 
 async function delWorkout(id){
   syncing(true);await sb.from('workout_log').delete().eq('id',id);syncing(false);
-  wkLog=wkLog.filter(e=>e.id!==id);renderHistory();renderRings();renderTodayLog();
-}
-
-function renderMuscle(){
-  const cut=new Date();cut.setDate(cut.getDate()-7);
-  const recent=wkLog.filter(e=>new Date(e.date)>=cut);
-  document.getElementById('muscleGrid').innerHTML=MG.map(({name})=>{
-    // sum sets: new entries (set_num=0) use reps as set count; old entries count as 1 each
-    const s=recent.filter(e=>(e.group||e.muscle_group)===name)
-      .reduce((sum,e)=>(e.set_num===0?sum+(e.reps||1):sum+1),0);
-    const cls=s<5?'red':s<10?'amb':'good';
-    return`<div class="mc ${cls}"><div class="mc-lbl">${name.toUpperCase()}</div><div class="mc-num">${s}</div><div class="mc-bar-bg"><div class="mc-bar-fg" style="width:${Math.min(100,(s/10)*100)}%"></div></div><div class="mc-sub">${s}/10 sets</div></div>`;
-  }).join('');
-}
-
-function renderHistory(){
-  const el=document.getElementById('wkHistory');
-  if(!wkLog.length){el.innerHTML='<div class="empty">No entries yet.</div>';return;}
-  // group by date
-  const byDate={};
-  wkLog.forEach(e=>{if(!byDate[e.date])byDate[e.date]=[];byDate[e.date].push(e);});
-  const dates=Object.keys(byDate).sort((a,b)=>b.localeCompare(a)).slice(0,30);
-  el.innerHTML=dates.map(d=>{
-    const entries=byDate[d];
-    const tags=entries.map(e=>{
-      const sets=e.set_num===0?(e.cardio?e.miles+'mi':e.reps+'sets'):1;
-      return`<span style="display:inline-flex;align-items:center;gap:5px;background:var(--card);border:1px solid var(--border2);border-radius:8px;padding:4px 10px;font-size:12px;font-family:var(--mono);margin:3px">
-        ${MG.find(g=>g.name===(e.group||e.muscle_group))?.ico||''} ${(e.group||e.muscle_group)} <b style="color:var(--p2)">${sets}</b>
-        <button class="del" style="font-size:12px;padding:0 4px" onclick="delWorkout('${e.id}')">✕</button>
-      </span>`;
-    }).join('');
-    return`<div style="padding:14px 0;border-bottom:1px solid var(--border)">
-      <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:8px;letter-spacing:2px">${d}</div>
-      <div>${tags}</div>
-    </div>`;
-  }).join('')+'<div style="padding:14px 0;font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center">Showing last 30 days</div>';
+  wkLog=wkLog.filter(e=>e.id!==id);renderDayView();
 }
 
 // ── REST ──────────────────────────────────────────────────────────────────────
@@ -1280,7 +1144,7 @@ async function init(){
   updateDays();
   try{await syncCloud();}catch(e){console.warn('offline',e);}
   document.getElementById('viewDate').value=today();
-  renderLedger();renderExit();renderEdge();renderSleep();renderHistory();renderRings();renderTodayLog();
+  renderLedger();renderExit();renderEdge();renderSleep();renderDayView();
   updateXP();
   document.getElementById('loadingOverlay').classList.add('hidden');
 }
