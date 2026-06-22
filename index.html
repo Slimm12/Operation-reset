@@ -541,9 +541,17 @@ table.dt tbody tr:hover td { background: var(--card2); }
         <div class="pg-title">The <em>Exit</em></div>
       </div>
       <div class="card">
-        <div class="card-head">
-          <div class="card-label">JOB APPLICATIONS</div>
-          <button class="btn btn-sm" onclick="addJob()">+ Add</button>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+          <button class="btn btn-ghost btn-sm" onclick="shiftExitDay(-1)">‹ Prev</button>
+          <div style="text-align:center">
+            <div class="card-label" id="exitDayLabel">TODAY</div>
+            <div style="font-size:15px;font-weight:700;margin-top:2px" id="exitDayDate"></div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="shiftExitDay(1)" id="exitNextBtn">Next ›</button>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div class="card-label">APPLICATIONS</div>
+          <button class="btn btn-sm" id="addJobBtn" onclick="addJob()">+ Add</button>
         </div>
         <div id="jobList"></div>
       </div>
@@ -674,18 +682,56 @@ table.dt tbody tr:hover td { background: var(--card2); }
         <div class="pg-tag">SECTION 04</div>
         <div class="pg-title">The <em>Rest</em></div>
       </div>
-      <div class="sleep-stats">
-        <div class="sleep-stat">
-          <div class="sleep-stat-lbl">CURRENT STREAK</div>
-          <div class="sleep-stat-num" id="sleepStreak" style="color:var(--p2)">0</div>
-          <div class="sleep-stat-sub">consecutive nights logged</div>
+
+      <!-- SLEEP RINGS + DAY NAV -->
+      <div class="card" style="margin-bottom:18px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+          <button class="btn btn-ghost btn-sm" onclick="shiftSleepDay(-1)">‹ Prev</button>
+          <div style="text-align:center">
+            <div class="card-label" id="sleepDayLabel">TODAY</div>
+            <div style="font-size:15px;font-weight:700;margin-top:2px" id="sleepDayDate"></div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="shiftSleepDay(1)" id="sleepNextBtn">Next ›</button>
         </div>
-        <div class="sleep-stat">
-          <div class="sleep-stat-lbl">AVG SLEEP — LAST 7</div>
-          <div class="sleep-stat-num" id="avgSleep" style="color:var(--g)">--</div>
-          <div class="sleep-stat-sub">hours per night</div>
+        <div class="rings-card">
+          <div class="rings-left">
+            <div class="rings-wrap">
+              <svg viewBox="0 0 220 220" width="200" height="200">
+                <circle cx="110" cy="110" r="100" fill="none" stroke="#ffffff08" stroke-width="14"/>
+                <circle id="srNight" cx="110" cy="110" r="100" fill="none" stroke="var(--p2)" stroke-width="14"
+                  stroke-linecap="round" stroke-dasharray="628.3" stroke-dashoffset="628.3"
+                  transform="rotate(-90 110 110)" style="transition:stroke-dashoffset 1s ease"/>
+                <circle cx="110" cy="110" r="76" fill="none" stroke="#ffffff08" stroke-width="14"/>
+                <circle id="srWeek" cx="110" cy="110" r="76" fill="none" stroke="var(--g)" stroke-width="14"
+                  stroke-linecap="round" stroke-dasharray="477.5" stroke-dashoffset="477.5"
+                  transform="rotate(-90 110 110)" style="transition:stroke-dashoffset 1s ease"/>
+              </svg>
+            </div>
+          </div>
+          <div class="rings-right">
+            <div class="ring-legend">
+              <div class="rl-dot" style="background:var(--p2)"></div>
+              <div>
+                <div class="rl-label">HOURS THAT NIGHT</div>
+                <div class="rl-val"><span id="srNightVal">--</span> <span class="rl-goal">/ 8h goal</span></div>
+              </div>
+            </div>
+            <div class="ring-legend">
+              <div class="rl-dot" style="background:var(--g)"></div>
+              <div>
+                <div class="rl-label">WEEK AVG</div>
+                <div class="rl-val"><span id="srWeekVal">--</span> <span class="rl-goal">/ 8h goal</span></div>
+              </div>
+            </div>
+            <div style="margin-top:20px">
+              <div class="card-label" style="margin-bottom:4px">STREAK</div>
+              <div style="font-family:var(--mono);font-size:32px;font-weight:500;color:var(--p2)" id="sleepStreak">0</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px">consecutive nights</div>
+            </div>
+          </div>
         </div>
       </div>
+
       <div class="card">
         <div class="card-head"><div class="card-label">LOG TONIGHT</div></div>
         <div class="form-grid form-sleep">
@@ -932,13 +978,32 @@ async function saveSavings(){
 }
 
 // ── EXIT ──────────────────────────────────────────────────────────────────────
-function renderExit(){renderObjs('exitObjs',exitObjs,'exit','exitPill');renderJobs();}
+let exitDay=today();
+function shiftExitDay(dir){
+  const d=new Date(exitDay+'T12:00:00');d.setDate(d.getDate()+dir);
+  if(d>new Date())return;
+  exitDay=d.toISOString().split('T')[0];renderExit();
+}
+function renderExit(){
+  renderObjs('exitObjs',exitObjs,'exit','exitPill');
+  const isToday=exitDay===today();
+  const d=new Date(exitDay+'T12:00:00');
+  document.getElementById('exitDayLabel').textContent=isToday?'TODAY':'';
+  document.getElementById('exitDayDate').textContent=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  document.getElementById('exitNextBtn').disabled=isToday;
+  document.getElementById('exitNextBtn').style.opacity=isToday?'0.3':'1';
+  document.getElementById('addJobBtn').style.display=isToday?'':'none';
+  renderJobs();
+}
 function renderJobs(){
   const el=document.getElementById('jobList');
-  if(!jobApps.length){el.innerHTML='<div class="empty">No applications yet. Click "+ Add" to start.</div>';return;}
+  const dayApps=jobApps.filter(a=>(a.created_at||'').split('T')[0]===exitDay);
+  if(!dayApps.length){
+    el.innerHTML=`<div class="empty">${exitDay===today()?'No applications today. Click "+ Add" to start.':'No applications logged on this day.'}</div>`;return;
+  }
   const sts=['Applied','Screening','Interview','Final Round','Offer','Rejected','Withdrawn'];
   el.innerHTML=`<table class="dt"><thead><tr><th>COMPANY</th><th>ROLE</th><th>STATUS</th><th>LINK</th><th></th></tr></thead>
-  <tbody>${jobApps.map(a=>`<tr>
+  <tbody>${dayApps.map(a=>`<tr>
     <td><input class="inline-in" value="${a.company||''}" onchange="updJob('${a.id}','company',this.value)" placeholder="Company"></td>
     <td><input class="inline-in" value="${a.role||''}" onchange="updJob('${a.id}','role',this.value)" placeholder="Role"></td>
     <td><select class="ssel" onchange="updJob('${a.id}','status',this.value)">${sts.map(s=>`<option ${a.status===s?'selected':''}>${s}</option>`).join('')}</select></td>
@@ -1091,6 +1156,30 @@ async function delWorkout(id){
 }
 
 // ── REST ──────────────────────────────────────────────────────────────────────
+let sleepViewDay=today();
+function shiftSleepDay(dir){
+  const d=new Date(sleepViewDay+'T12:00:00');d.setDate(d.getDate()+dir);
+  if(d>new Date())return;
+  sleepViewDay=d.toISOString().split('T')[0];renderSleep();
+}
+function renderSleepRings(){
+  const entry=sleepLog.find(e=>e.date===sleepViewDay);
+  const nightH=entry?parseFloat(entry.hours):0;
+  const goalH=8;
+  const ref=new Date(sleepViewDay+'T12:00:00');
+  const dow=ref.getDay();const weekStart=new Date(ref);weekStart.setDate(ref.getDate()-(dow===0?6:dow-1));
+  const weekDates=Array.from({length:7},(_,i)=>{const d=new Date(weekStart);d.setDate(weekStart.getDate()+i);return d.toISOString().split('T')[0];});
+  const weekEntries=sleepLog.filter(e=>weekDates.includes(e.date));
+  const weekAvg=weekEntries.length?(weekEntries.reduce((s,e)=>s+parseFloat(e.hours),0)/weekEntries.length):0;
+  const nightPct=Math.min(nightH/goalH,1);
+  const nightRing=document.getElementById('srNight');
+  if(nightRing)nightRing.style.strokeDashoffset=628.3*(1-nightPct);
+  const srNV=document.getElementById('srNightVal');if(srNV)srNV.textContent=nightH>0?nightH.toFixed(1)+'h':'—';
+  const weekPct=Math.min(weekAvg/goalH,1);
+  const weekRing=document.getElementById('srWeek');
+  if(weekRing)weekRing.style.strokeDashoffset=477.5*(1-weekPct);
+  const srWV=document.getElementById('srWeekVal');if(srWV)srWV.textContent=weekAvg>0?weekAvg.toFixed(1)+'h':'—';
+}
 function calcH(b,w){const[bh,bm]=b.split(':').map(Number),[wh,wm]=w.split(':').map(Number);let m=(wh*60+wm)-(bh*60+bm);if(m<0)m+=1440;return(m/60).toFixed(1);}
 async function logSleep(){
   const date=document.getElementById('sleepDt').value,bed=document.getElementById('sleepBd').value,wake=document.getElementById('sleepWk').value,quality=document.getElementById('sleepQ').value;
@@ -1112,6 +1201,12 @@ async function logSleep(){
 }
 async function delSleep(id){syncing(true);await sb.from('sleep_log').delete().eq('id',id);syncing(false);sleepLog=sleepLog.filter(e=>e.id!==id);renderSleep();}
 function renderSleep(){
+  const isToday=sleepViewDay===today();
+  const d=new Date(sleepViewDay+'T12:00:00');
+  const lbl=document.getElementById('sleepDayLabel');if(lbl)lbl.textContent=isToday?'TODAY':'';
+  const dtEl=document.getElementById('sleepDayDate');if(dtEl)dtEl.textContent=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  const nxt=document.getElementById('sleepNextBtn');if(nxt){nxt.disabled=isToday;nxt.style.opacity=isToday?'0.3':'1';}
+  renderSleepRings();
   const body=document.getElementById('sleepBody');
   document.getElementById('sleepEmpty').style.display=sleepLog.length?'none':'block';
   const qm={Poor:'q-poor',Fair:'q-fair',Good:'q-good',Great:'q-great'};
@@ -1125,9 +1220,7 @@ function renderSleep(){
   </tr>`).join('');
   let streak=0;const now=new Date();
   for(let d=0;d<365;d++){const c=new Date(now);c.setDate(now.getDate()-d);if(sleepLog.find(e=>e.date===c.toISOString().split('T')[0]))streak++;else if(d>0)break;}
-  document.getElementById('sleepStreak').textContent=streak;
-  const l7=sleepLog.slice(0,7);
-  if(l7.length)document.getElementById('avgSleep').textContent=(l7.reduce((s,e)=>s+parseFloat(e.hours),0)/l7.length).toFixed(1)+'h';
+  const sk=document.getElementById('sleepStreak');if(sk)sk.textContent=streak;
 }
 
 // ── EDGE ──────────────────────────────────────────────────────────────────────
