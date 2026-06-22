@@ -563,7 +563,14 @@ table.dt tbody tr:hover td { background: var(--card2); }
       <!-- FITNESS RINGS + TODAY SUMMARY -->
       <div class="card rings-card">
         <div class="rings-left">
-          <div class="card-label" style="margin-bottom:20px">THIS WEEK</div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+            <button class="btn btn-ghost btn-sm" onclick="shiftRingWeek(-1)">‹</button>
+            <div style="text-align:center;min-width:90px">
+              <div class="card-label" id="ringWeekLabel">THIS WEEK</div>
+              <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:2px" id="ringWeekRange"></div>
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="shiftRingWeek(1)" id="ringNextBtn">›</button>
+          </div>
           <div class="rings-wrap">
             <svg viewBox="0 0 220 220" width="220" height="220">
               <!-- Steps ring (outer) -->
@@ -588,8 +595,8 @@ table.dt tbody tr:hover td { background: var(--card2); }
           <div class="ring-legend">
             <div class="rl-dot" style="background:var(--r)"></div>
             <div>
-              <div class="rl-label">STEPS TODAY</div>
-              <div class="rl-val"><span id="rStepsVal">0</span> <span class="rl-goal">/ 10,000</span></div>
+              <div class="rl-label">STEPS <span id="rStepsDay"></span></div>
+              <div class="rl-val"><span id="rStepsVal">0</span> <span class="rl-goal">/ 15,000</span></div>
             </div>
           </div>
           <div class="ring-legend">
@@ -973,33 +980,60 @@ async function logSteps(){
 }
 
 // ── RINGS ─────────────────────────────────────────────────────────────────────
+let ringWeekOffset=0; // 0=this week, -1=last week, etc.
+
+function shiftRingWeek(dir){
+  ringWeekOffset+=dir;
+  if(ringWeekOffset>0)ringWeekOffset=0;
+  renderRings();
+}
+
+function getWeekBounds(offset){
+  const now=new Date();
+  const sun=new Date(now);
+  sun.setDate(now.getDate()-now.getDay()+offset*7);
+  sun.setHours(0,0,0,0);
+  const sat=new Date(sun);sat.setDate(sun.getDate()+6);
+  return{start:sun,end:sat};
+}
+
+function fmtDate(d){return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});}
+
 function renderRings(){
-  const d=today();
-  const steps=stepsData[d]||0;
-  const STEPS_GOAL=10000;
+  const STEPS_GOAL=15000, SETS_GOAL=20, DAYS_GOAL=4;
 
-  const weekStart=new Date();weekStart.setDate(weekStart.getDate()-weekStart.getDay());
-  const weekEntries=wkLog.filter(e=>new Date(e.date)>=weekStart&&e.exercise!=='Steps');
-  const totalSets=weekEntries.length;
-  const SETS_GOAL=20;
-  const workoutDays=[...new Set(weekEntries.map(e=>e.date))].length;
-  const DAYS_GOAL=4;
+  const{start,end}=getWeekBounds(ringWeekOffset);
+  const isCurrentWeek=ringWeekOffset===0;
 
-  // update numbers
+  // Label
+  document.getElementById('ringWeekLabel').textContent=isCurrentWeek?'THIS WEEK':'WEEK OF';
+  document.getElementById('ringWeekRange').textContent=fmtDate(start)+' – '+fmtDate(end);
+  document.getElementById('ringNextBtn').disabled=isCurrentWeek;
+  document.getElementById('ringNextBtn').style.opacity=isCurrentWeek?'0.3':'1';
+
+  // Steps: show the last day of the week that has data, or today if current week
+  const daysInWeek=[];
+  for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);daysInWeek.push(d.toISOString().split('T')[0]);}
+  const stepsDay=isCurrentWeek?today():daysInWeek.filter(d=>stepsData[d]).pop()||daysInWeek[6];
+  const steps=stepsData[stepsDay]||0;
+  document.getElementById('rStepsDay').textContent=isCurrentWeek?'TODAY':'('+fmtDate(new Date(stepsDay+' 12:00'))+')';
   document.getElementById('rStepsVal').textContent=steps.toLocaleString();
+  if(isCurrentWeek&&steps)document.getElementById('stepsInput').value=steps;
+
+  // Sets + days: filter wkLog for this week's date range
+  const startStr=start.toISOString().split('T')[0];
+  const endStr=end.toISOString().split('T')[0];
+  const weekEntries=wkLog.filter(e=>e.date>=startStr&&e.date<=endStr);
+  const totalSets=weekEntries.length;
+  const workoutDays=[...new Set(weekEntries.map(e=>e.date))].length;
+
   document.getElementById('rSetsVal').textContent=totalSets;
   document.getElementById('rDaysVal').textContent=workoutDays;
 
-  // update today's step input placeholder
-  if(steps)document.getElementById('stepsInput').value=steps;
-
-  // animate rings
-  const stPct=Math.min(1,steps/STEPS_GOAL);
-  const setPct=Math.min(1,totalSets/SETS_GOAL);
-  const dayPct=Math.min(1,workoutDays/DAYS_GOAL);
-  document.getElementById('rSteps').style.strokeDashoffset=628.3*(1-stPct);
-  document.getElementById('rSets').style.strokeDashoffset=477.5*(1-setPct);
-  document.getElementById('rDays').style.strokeDashoffset=326.7*(1-dayPct);
+  // Animate rings
+  document.getElementById('rSteps').style.strokeDashoffset=628.3*(1-Math.min(1,steps/STEPS_GOAL));
+  document.getElementById('rSets').style.strokeDashoffset=477.5*(1-Math.min(1,totalSets/SETS_GOAL));
+  document.getElementById('rDays').style.strokeDashoffset=326.7*(1-Math.min(1,workoutDays/DAYS_GOAL));
 }
 
 // ── TODAY LOG ─────────────────────────────────────────────────────────────────
