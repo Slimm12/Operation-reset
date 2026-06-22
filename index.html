@@ -528,19 +528,31 @@ table.dt tbody tr:hover td { background: var(--card2); }
 
     <!-- HQ -->
     <div class="sec on" id="sec-hq">
-      <div class="bento" id="bentoCont"></div>
-      <div class="card">
+      <div class="card" style="margin-bottom:18px">
         <div class="card-head">
           <div class="card-label">TODAY'S TASKS</div>
           <div style="font-family:var(--mono);font-size:10px;color:var(--muted)" id="taskClock"></div>
         </div>
-        <div id="taskList"></div>
+        <div id="taskListToday"></div>
         <div class="task-add-row">
-          <div class="fg" style="margin:0"><input type="text" id="taskText" placeholder="Task name…"></div>
-          <div class="fg" style="margin:0"><input type="time" id="taskTime"></div>
-          <button class="btn btn-sm" onclick="addTask()">+ ADD</button>
+          <div class="fg" style="margin:0"><input type="text" id="taskTextToday" placeholder="Task name…"></div>
+          <div class="fg" style="margin:0"><input type="time" id="taskTimeToday"></div>
+          <button class="btn btn-sm" onclick="addTask('today')">+ ADD</button>
         </div>
       </div>
+      <div class="card" style="margin-bottom:18px">
+        <div class="card-head">
+          <div class="card-label">TOMORROW'S TASKS</div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--muted2)" id="tomorrowLabel"></div>
+        </div>
+        <div id="taskListTomorrow"></div>
+        <div class="task-add-row">
+          <div class="fg" style="margin:0"><input type="text" id="taskTextTomorrow" placeholder="Task name…"></div>
+          <div class="fg" style="margin:0"><input type="time" id="taskTimeTomorrow"></div>
+          <button class="btn btn-sm" onclick="addTask('tomorrow')">+ ADD</button>
+        </div>
+      </div>
+      <div class="bento" id="bentoCont"></div>
     </div>
 
     <!-- RANK -->
@@ -1292,52 +1304,69 @@ function renderSleep(){
 }
 
 // ── DAILY TASKS ───────────────────────────────────────────────────────────────
-let dailyTasks=[];
-const taskKey=()=>'tasks_'+today();
+const taskTasks={today:[],tomorrow:[]};
+function tomorrow(){const d=new Date();d.setDate(d.getDate()+1);return d.toISOString().split('T')[0];}
+function dateFor(which){return which==='today'?today():tomorrow();}
 async function loadTasks(){
-  try{
-    const{data}=await sb.from('settings').select('value').eq('key',taskKey()).maybeSingle();
-    dailyTasks=data?JSON.parse(data.value):[];
-  }catch(e){dailyTasks=[];}
+  for(const which of['today','tomorrow']){
+    try{
+      const{data}=await sb.from('settings').select('value').eq('key','tasks_'+dateFor(which)).maybeSingle();
+      taskTasks[which]=data?JSON.parse(data.value):[];
+    }catch(e){taskTasks[which]=[];}
+  }
   renderTasks();
 }
-async function saveTasks(){syncing(true);await sb.from('settings').upsert({key:taskKey(),value:JSON.stringify(dailyTasks)});syncing(false);}
-async function addTask(){
-  const text=document.getElementById('taskText').value.trim();
-  const time=document.getElementById('taskTime').value;
+async function saveTasksFor(which){
+  syncing(true);
+  await sb.from('settings').upsert({key:'tasks_'+dateFor(which),value:JSON.stringify(taskTasks[which])});
+  syncing(false);
+}
+async function addTask(which){
+  const text=document.getElementById('taskText'+cap(which)).value.trim();
+  const time=document.getElementById('taskTime'+cap(which)).value;
   if(!text||!time){alert('Enter a task name and time');return;}
-  dailyTasks.push({id:Date.now().toString(),text,time,done:false});
-  dailyTasks.sort((a,b)=>a.time.localeCompare(b.time));
-  document.getElementById('taskText').value='';
-  document.getElementById('taskTime').value='';
-  await saveTasks();renderTasks();
+  taskTasks[which].push({id:Date.now().toString(),text,time,done:false});
+  taskTasks[which].sort((a,b)=>a.time.localeCompare(b.time));
+  document.getElementById('taskText'+cap(which)).value='';
+  document.getElementById('taskTime'+cap(which)).value='';
+  await saveTasksFor(which);renderTasks();
 }
-async function toggleTask(id){
-  const t=dailyTasks.find(t=>t.id===id);
-  if(t){t.done=!t.done;await saveTasks();renderTasks();}
+async function toggleTask(which,id){
+  const t=taskTasks[which].find(t=>t.id===id);
+  if(t){t.done=!t.done;await saveTasksFor(which);renderTasks();}
 }
-async function deleteTask(id){
-  dailyTasks=dailyTasks.filter(t=>t.id!==id);
-  await saveTasks();renderTasks();
+async function deleteTask(which,id){
+  taskTasks[which]=taskTasks[which].filter(t=>t.id!==id);
+  await saveTasksFor(which);renderTasks();
 }
-function renderTasks(){
-  const el=document.getElementById('taskList');if(!el)return;
+function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
+function renderTaskList(which,elId,checkClock){
+  const el=document.getElementById(elId);if(!el)return;
   const now=new Date();
   const cur=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-  const clk=document.getElementById('taskClock');
-  if(clk)clk.textContent=now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
-  if(!dailyTasks.length){el.innerHTML='<div class="empty">No tasks yet. Add one below.</div>';return;}
-  el.innerHTML=dailyTasks.map(t=>{
-    const overdue=!t.done&&t.time<cur;
+  if(checkClock){
+    const clk=document.getElementById('taskClock');
+    if(clk)clk.textContent=now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  }
+  const tasks=taskTasks[which];
+  if(!tasks.length){el.innerHTML=`<div class="empty">No ${which==='today'?'tasks today':'tasks scheduled for tomorrow'}. Add one below.</div>`;return;}
+  el.innerHTML=tasks.map(t=>{
+    const overdue=which==='today'&&!t.done&&t.time<cur;
     const cls=t.done?'done':overdue?'overdue':'';
     const fmt=new Date('2000-01-01T'+t.time).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
     return`<div class="task-item ${cls}">
       <span class="task-time">${fmt}</span>
       <span class="task-text">${t.text}</span>
-      <div class="task-check" onclick="toggleTask('${t.id}')">${t.done?'✓':''}</div>
-      <button class="del" onclick="deleteTask('${t.id}')">✕</button>
+      <div class="task-check" onclick="toggleTask('${which}','${t.id}')">${t.done?'✓':''}</div>
+      <button class="del" onclick="deleteTask('${which}','${t.id}')">✕</button>
     </div>`;
   }).join('');
+}
+function renderTasks(){
+  renderTaskList('today','taskListToday',true);
+  renderTaskList('tomorrow','taskListTomorrow',false);
+  const lbl=document.getElementById('tomorrowLabel');
+  if(lbl){const d=new Date();d.setDate(d.getDate()+1);lbl.textContent=d.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});}
 }
 
 // ── EDGE ──────────────────────────────────────────────────────────────────────
