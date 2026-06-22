@@ -365,6 +365,29 @@ table.dt tbody tr:hover td { background: var(--card2); }
 .dl-sets-lbl { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: 1px; }
 @media (max-width: 768px) { .daylog-grid { grid-template-columns: repeat(2, 1fr); } }
 
+/* ─── FITNESS RINGS ─────────────────────────────────────────────────────── */
+.rings-card { display: flex; gap: 32px; align-items: center; }
+.rings-left { flex-shrink: 0; }
+.rings-wrap { position: relative; }
+.rings-right { flex: 1; display: flex; flex-direction: column; gap: 20px; }
+.ring-legend { display: flex; align-items: center; gap: 16px; }
+.rl-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.rl-label { font-family: var(--mono); font-size: 9px; letter-spacing: 2px; color: var(--muted); margin-bottom: 4px; }
+.rl-val { font-family: var(--mono); font-size: 22px; font-weight: 500; }
+.rl-goal { font-size: 13px; color: var(--muted); }
+
+/* ─── TODAY LOG ──────────────────────────────────────────────────────────── */
+.today-group { margin-bottom: 16px; }
+.today-group-lbl { font-family: var(--mono); font-size: 9px; letter-spacing: 2px; color: var(--muted); margin-bottom: 8px; }
+.today-set-row { display: flex; align-items: center; gap: 14px; padding: 10px 14px; border-radius: 12px; background: var(--card2); border: 1px solid var(--border); margin-bottom: 6px; }
+.today-set-ex { font-size: 14px; font-weight: 600; flex: 1; }
+.today-set-detail { font-family: var(--mono); font-size: 12px; color: var(--p2); }
+
+@media (max-width: 768px) {
+  .rings-card { flex-direction: column; align-items: flex-start; }
+  .rings-wrap svg { width: 180px; height: 180px; }
+}
+
 /* ─── MISC ───────────────────────────────────────────────────────────────── */
 .empty { text-align: center; padding: 48px; color: var(--muted); font-size: 13px; font-family: var(--mono); letter-spacing: 1px; }
 .frow { display: flex; gap: 10px; align-items: center; }
@@ -536,13 +559,73 @@ table.dt tbody tr:hover td { background: var(--card2); }
         <div class="pg-tag">SECTION 03</div>
         <div class="pg-title">The <em>Iron</em></div>
       </div>
+
+      <!-- FITNESS RINGS + TODAY SUMMARY -->
+      <div class="card rings-card">
+        <div class="rings-left">
+          <div class="card-label" style="margin-bottom:20px">THIS WEEK</div>
+          <div class="rings-wrap">
+            <svg viewBox="0 0 220 220" width="220" height="220">
+              <!-- Steps ring (outer) -->
+              <circle cx="110" cy="110" r="100" fill="none" stroke="#ffffff08" stroke-width="14"/>
+              <circle id="rSteps" cx="110" cy="110" r="100" fill="none" stroke="var(--r)" stroke-width="14"
+                stroke-linecap="round" stroke-dasharray="628.3" stroke-dashoffset="628.3"
+                transform="rotate(-90 110 110)" style="transition:stroke-dashoffset 1s ease"/>
+              <!-- Sets ring (middle) -->
+              <circle cx="110" cy="110" r="76" fill="none" stroke="#ffffff08" stroke-width="14"/>
+              <circle id="rSets" cx="110" cy="110" r="76" fill="none" stroke="var(--g)" stroke-width="14"
+                stroke-linecap="round" stroke-dasharray="477.5" stroke-dashoffset="477.5"
+                transform="rotate(-90 110 110)" style="transition:stroke-dashoffset 1s ease"/>
+              <!-- Days ring (inner) -->
+              <circle cx="110" cy="110" r="52" fill="none" stroke="#ffffff08" stroke-width="14"/>
+              <circle id="rDays" cx="110" cy="110" r="52" fill="none" stroke="var(--p2)" stroke-width="14"
+                stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="326.7"
+                transform="rotate(-90 110 110)" style="transition:stroke-dashoffset 1s ease"/>
+            </svg>
+          </div>
+        </div>
+        <div class="rings-right">
+          <div class="ring-legend">
+            <div class="rl-dot" style="background:var(--r)"></div>
+            <div>
+              <div class="rl-label">STEPS TODAY</div>
+              <div class="rl-val"><span id="rStepsVal">0</span> <span class="rl-goal">/ 10,000</span></div>
+            </div>
+          </div>
+          <div class="ring-legend">
+            <div class="rl-dot" style="background:var(--g)"></div>
+            <div>
+              <div class="rl-label">SETS THIS WEEK</div>
+              <div class="rl-val"><span id="rSetsVal">0</span> <span class="rl-goal">/ 20</span></div>
+            </div>
+          </div>
+          <div class="ring-legend">
+            <div class="rl-dot" style="background:var(--p2)"></div>
+            <div>
+              <div class="rl-label">WORKOUT DAYS</div>
+              <div class="rl-val"><span id="rDaysVal">0</span> <span class="rl-goal">/ 4</span></div>
+            </div>
+          </div>
+          <div style="margin-top:24px">
+            <div class="card-label" style="margin-bottom:10px">STEPS TODAY</div>
+            <div style="display:flex;gap:10px;align-items:center">
+              <div class="fg" style="margin:0;flex:1"><input type="number" id="stepsInput" placeholder="e.g. 8500" min="0" style="width:100%"></div>
+              <button class="btn btn-sm" onclick="logSteps()">SAVE</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TODAY'S WORKOUT LOG -->
       <div class="card">
         <div class="card-head">
-          <div class="card-label">MUSCLE BALANCE — 7 DAYS</div>
-          <div style="font-family:var(--mono);font-size:10px;color:var(--muted)">🔴 &lt;5 &nbsp; 🟡 5-9 &nbsp; 🟢 10+</div>
+          <div class="card-label" id="todayLabel">TODAY'S WORKOUT</div>
+          <div class="fg" style="margin:0"><input type="date" id="viewDate" style="width:auto;padding:8px 12px;font-size:12px" onchange="renderTodayLog()"></div>
         </div>
-        <div class="muscle-grid" id="muscleGrid"></div>
+        <div id="todayLog"><div class="empty">Nothing logged yet for this day.</div></div>
       </div>
+
+      <!-- LOG A SET -->
       <div class="card">
         <div class="card-head"><div class="card-label">LOG A SET</div></div>
         <span class="toggle-lnk" id="customToggle" onclick="toggleCustom()">✏️ Type a custom exercise instead</span>
@@ -579,6 +662,8 @@ table.dt tbody tr:hover td { background: var(--card2); }
           <div style="padding-top:24px"><button class="btn" id="logCustomBtn" onclick="logCustom()">LOG</button></div>
         </div>
       </div>
+
+      <!-- HISTORY -->
       <div class="card">
         <div class="card-head"><div class="card-label">WORKOUT HISTORY</div></div>
         <div id="wkHistory"></div>
@@ -703,12 +788,13 @@ let sleepLog=[], wkLog=[], jobApps=[], savings=0;
 function syncing(on){document.getElementById('syncDot').className='sync-ico'+(on?' pulse':'');}
 
 async function syncCloud(){
-  const[oR,sR,wR,jR,stR]=await Promise.all([
+  const[oR,sR,wR,jR,stR,spR]=await Promise.all([
     sb.from('objectives').select('*'),
     sb.from('sleep_log').select('*').order('date',{ascending:false}),
     sb.from('workout_log').select('*').order('created_at',{ascending:false}),
     sb.from('job_apps').select('*').order('created_at',{ascending:true}),
     sb.from('settings').select('value').eq('key','savings').maybeSingle(),
+    sb.from('settings').select('key,value').like('key','steps_%'),
   ]);
   if(oR.data)oR.data.forEach(o=>{
     const map={ledger:ledObjs,exit:exitObjs,edge:edgeObjs};
@@ -718,6 +804,7 @@ async function syncCloud(){
   if(wR.data)wkLog=wR.data.map(e=>({...e,group:e.muscle_group,setNum:e.set_num}));
   if(jR.data)jobApps=jR.data;
   if(stR.data)savings=parseFloat(stR.data.value)||0;
+  if(spR.data)spR.data.forEach(r=>{stepsData[r.key.replace('steps_','')]=parseInt(r.value)||0;});
 }
 
 // ── XP / RANK ─────────────────────────────────────────────────────────────────
@@ -868,6 +955,82 @@ async function addJob(){
 async function updJob(id,f,v){jobApps.find(x=>x.id===id)[f]=v;syncing(true);await sb.from('job_apps').update({[f]:v}).eq('id',id);syncing(false);}
 async function delJob(id){syncing(true);await sb.from('job_apps').delete().eq('id',id);syncing(false);jobApps=jobApps.filter(a=>a.id!==id);renderJobs();}
 
+// ── STEPS ────────────────────────────────────────────────────────────────────
+let stepsData={};// {date: stepCount}
+
+async function loadSteps(){
+  const{data}=await sb.from('settings').select('key,value').like('key','steps_%');
+  if(data)data.forEach(r=>{stepsData[r.key.replace('steps_','')]=parseInt(r.value)||0;});
+}
+async function logSteps(){
+  const val=parseInt(document.getElementById('stepsInput').value)||0;
+  const d=today();
+  stepsData[d]=val;
+  syncing(true);
+  await sb.from('settings').upsert({key:'steps_'+d,value:String(val)});
+  syncing(false);
+  renderRings();
+}
+
+// ── RINGS ─────────────────────────────────────────────────────────────────────
+function renderRings(){
+  const d=today();
+  const steps=stepsData[d]||0;
+  const STEPS_GOAL=10000;
+
+  const weekStart=new Date();weekStart.setDate(weekStart.getDate()-weekStart.getDay());
+  const weekEntries=wkLog.filter(e=>new Date(e.date)>=weekStart&&e.exercise!=='Steps');
+  const totalSets=weekEntries.length;
+  const SETS_GOAL=20;
+  const workoutDays=[...new Set(weekEntries.map(e=>e.date))].length;
+  const DAYS_GOAL=4;
+
+  // update numbers
+  document.getElementById('rStepsVal').textContent=steps.toLocaleString();
+  document.getElementById('rSetsVal').textContent=totalSets;
+  document.getElementById('rDaysVal').textContent=workoutDays;
+
+  // update today's step input placeholder
+  if(steps)document.getElementById('stepsInput').value=steps;
+
+  // animate rings
+  const stPct=Math.min(1,steps/STEPS_GOAL);
+  const setPct=Math.min(1,totalSets/SETS_GOAL);
+  const dayPct=Math.min(1,workoutDays/DAYS_GOAL);
+  document.getElementById('rSteps').style.strokeDashoffset=628.3*(1-stPct);
+  document.getElementById('rSets').style.strokeDashoffset=477.5*(1-setPct);
+  document.getElementById('rDays').style.strokeDashoffset=326.7*(1-dayPct);
+}
+
+// ── TODAY LOG ─────────────────────────────────────────────────────────────────
+function renderTodayLog(){
+  const d=document.getElementById('viewDate').value||today();
+  const entries=wkLog.filter(e=>e.date===d&&e.exercise!=='Steps');
+  const el=document.getElementById('todayLog');
+  if(!entries.length){el.innerHTML='<div class="empty">Nothing logged yet for this day.</div>';return;}
+
+  // group by muscle group
+  const groups={};
+  entries.forEach(e=>{
+    const g=e.muscle_group||e.group||'Other';
+    if(!groups[g])groups[g]=[];
+    groups[g].push(e);
+  });
+
+  el.innerHTML=Object.entries(groups).map(([grp,sets])=>`
+    <div class="today-group">
+      <div class="today-group-lbl">${grp.toUpperCase()}</div>
+      ${sets.map(s=>`
+        <div class="today-set-row">
+          <span class="today-set-ex">${s.exercise}</span>
+          <span class="today-set-detail">
+            ${s.cardio?`${s.miles||0} mi`:`Set ${s.set_num||s.setNum} · ${s.reps} reps${s.weight?` · ${s.weight} lbs`:''}`}
+          </span>
+          <button class="del" onclick="delWorkout('${s.id}')">✕</button>
+        </div>`).join('')}
+    </div>`).join('');
+}
+
 // ── IRON ──────────────────────────────────────────────────────────────────────
 let customMode=false;
 function toggleCustom(){
@@ -896,7 +1059,7 @@ async function logSet(){
   syncing(false);btn.disabled=false;btn.textContent='LOG';
   if(data)wkLog.unshift({...data,group:data.muscle_group,setNum:data.set_num});
   document.getElementById('setN').value=setNum+1;
-  loadPrev();renderHistory();renderMuscle();
+  loadPrev();renderHistory();renderRings();renderTodayLog();
 }
 async function logCustom(){
   const exercise=document.getElementById('customEx').value.trim();
@@ -912,7 +1075,7 @@ async function logCustom(){
   syncing(false);btn.disabled=false;btn.textContent='LOG';
   if(data)wkLog.unshift({...data,group:'Custom',setNum:data.set_num});
   document.getElementById('customSetN').value=setNum+1;
-  renderHistory();renderMuscle();
+  renderHistory();renderRings();renderTodayLog();
 }
 
 const MG = [
@@ -991,7 +1154,7 @@ async function logDay(){
 
 async function delWorkout(id){
   syncing(true);await sb.from('workout_log').delete().eq('id',id);syncing(false);
-  wkLog=wkLog.filter(e=>e.id!==id);renderHistory();renderMuscle();
+  wkLog=wkLog.filter(e=>e.id!==id);renderHistory();renderRings();renderTodayLog();
 }
 
 function renderMuscle(){
@@ -1082,7 +1245,8 @@ async function init(){
   document.getElementById('customDate').value=today();
   updateDays();
   try{await syncCloud();}catch(e){console.warn('offline',e);}
-  renderLedger();renderExit();renderEdge();renderSleep();renderMuscle();renderHistory();
+  document.getElementById('viewDate').value=today();
+  renderLedger();renderExit();renderEdge();renderSleep();renderHistory();renderRings();renderTodayLog();
   updateXP();
   document.getElementById('loadingOverlay').classList.add('hidden');
 }
