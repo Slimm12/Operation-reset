@@ -1064,7 +1064,7 @@ let exitDay=today();
 function shiftExitDay(dir){
   const d=new Date(exitDay+'T12:00:00');d.setDate(d.getDate()+dir);
   if(d>new Date())return;
-  exitDay=d.toISOString().split('T')[0];renderExit();
+  exitDay=localDate(d);renderExit();
 }
 function renderExit(){
   renderObjs('exitObjs',exitObjs,'exit','exitPill');
@@ -1123,7 +1123,7 @@ function shiftDay(dir){
   const d=new Date(viewDay+'T12:00:00');
   d.setDate(d.getDate()+dir);
   if(d>new Date())return;
-  viewDay=d.toISOString().split('T')[0];
+  viewDay=localDate(d);
   renderDayView();
 }
 
@@ -1243,7 +1243,7 @@ let sleepViewDay=today();
 function shiftSleepDay(dir){
   const d=new Date(sleepViewDay+'T12:00:00');d.setDate(d.getDate()+dir);
   if(d>new Date())return;
-  sleepViewDay=d.toISOString().split('T')[0];renderSleep();
+  sleepViewDay=localDate(d);renderSleep();
 }
 function renderSleepRings(){
   const entry=sleepLog.find(e=>e.date===sleepViewDay);
@@ -1251,7 +1251,7 @@ function renderSleepRings(){
   const goalH=8;
   const ref=new Date(sleepViewDay+'T12:00:00');
   const dow=ref.getDay();const weekStart=new Date(ref);weekStart.setDate(ref.getDate()-dow);
-  const weekDates=Array.from({length:7},(_,i)=>{const d=new Date(weekStart);d.setDate(weekStart.getDate()+i);return d.toISOString().split('T')[0];});
+  const weekDates=Array.from({length:7},(_,i)=>{const d=new Date(weekStart);d.setDate(weekStart.getDate()+i);return localDate(d);});
   const weekEntries=sleepLog.filter(e=>weekDates.includes(e.date));
   const weekAvg=weekEntries.length?(weekEntries.reduce((s,e)=>s+parseFloat(e.hours),0)/weekEntries.length):0;
   const nightPct=Math.min(nightH/goalH,1);
@@ -1305,7 +1305,7 @@ function renderSleep(){
 
 // ── DAILY TASKS ───────────────────────────────────────────────────────────────
 const taskTasks={today:[],tomorrow:[]};
-function tomorrow(){const d=new Date();d.setDate(d.getDate()+1);return d.toISOString().split('T')[0];}
+function tomorrow(){const d=new Date();d.setDate(d.getDate()+1);return localDate(d);}
 function dateFor(which){return which==='today'?today():tomorrow();}
 async function loadTasks(){
   for(const which of['today','tomorrow']){
@@ -1373,7 +1373,8 @@ function renderTasks(){
 function renderEdge(){renderObjs('edgeObjs',edgeObjs,'edge','edgePill');}
 
 // ── UTILS ─────────────────────────────────────────────────────────────────────
-function today(){return new Date().toISOString().split('T')[0];}
+function localDate(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function today(){return localDate(new Date());}
 
 // ── INIT ─────────────────────────────────────────────────────────────────────
 async function init(){
