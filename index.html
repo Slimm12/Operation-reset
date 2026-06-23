@@ -965,7 +965,8 @@ function updateXP(){
 // ── DAYS ─────────────────────────────────────────────────────────────────────
 function updateDays(){
   document.getElementById('daysChip').textContent=Math.max(0,Math.ceil((new Date('2026-08-10')-new Date())/86400000))+' days left';
-  document.getElementById('dateChip').textContent=new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+  const _n=new Date();
+  document.getElementById('dateChip').textContent=_n.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})+' · '+_n.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
 }
 
 // ── NAV ──────────────────────────────────────────────────────────────────────
@@ -1388,7 +1389,7 @@ async function init(){
   renderLedger();renderExit();renderEdge();renderSleep();renderDayView();
   updateXP();
   await loadTasks();
-  setInterval(renderTasks,60000);
+  setInterval(()=>{renderTasks();updateDays();},60000);
   document.getElementById('loadingOverlay').classList.add('hidden');
 }
 init();
