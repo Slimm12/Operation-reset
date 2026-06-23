@@ -1066,7 +1066,7 @@ async function saveSavings(){
 let exitDay=today();
 function shiftExitDay(dir){
   const d=new Date(exitDay+'T12:00:00');d.setDate(d.getDate()+dir);
-  if(d>new Date())return;
+  if(localDate(d)>today())return;
   exitDay=localDate(d);renderExit();
 }
 function renderExit(){
@@ -1244,7 +1244,7 @@ async function delWorkout(id){
 let sleepViewDay=today();
 function shiftSleepDay(dir){
   const d=new Date(sleepViewDay+'T12:00:00');d.setDate(d.getDate()+dir);
-  if(d>new Date())return;
+  if(localDate(d)>today())return;
   sleepViewDay=localDate(d);renderSleep();
 }
 function renderSleepRings(){
