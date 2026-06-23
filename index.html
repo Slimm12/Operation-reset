@@ -1125,7 +1125,7 @@ let viewDay=today();
 function shiftDay(dir){
   const d=new Date(viewDay+'T12:00:00');
   d.setDate(d.getDate()+dir);
-  if(d>new Date())return;
+  if(localDate(d)>today())return;
   viewDay=localDate(d);
   renderDayView();
 }
@@ -1141,8 +1141,7 @@ function renderDayView(){
   document.getElementById('dayNextBtn').disabled=isToday;
   document.getElementById('dayNextBtn').style.opacity=isToday?'0.3':'1';
 
-  // show/hide steps input (only editable for today)
-  document.getElementById('stepsInputWrap').style.display=isToday?'block':'none';
+  document.getElementById('stepsInputWrap').style.display='block';
 
   renderRings();
   renderTodayLog();
