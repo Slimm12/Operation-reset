@@ -512,6 +512,7 @@ table.dt tbody tr:hover td { background: var(--card2); }
       <div class="topbar-title" id="tbTitle">HQ Dashboard</div>
     </div>
     <div class="topbar-right">
+      <div class="days-chip" id="dateChip"></div>
       <div class="days-chip" id="daysChip">-- days left</div>
       <div class="xp-chip" onclick="go('rank')">
         <svg width="28" height="28" viewBox="0 0 28 28">
@@ -964,6 +965,7 @@ function updateXP(){
 // ── DAYS ─────────────────────────────────────────────────────────────────────
 function updateDays(){
   document.getElementById('daysChip').textContent=Math.max(0,Math.ceil((new Date('2026-08-10')-new Date())/86400000))+' days left';
+  document.getElementById('dateChip').textContent=new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
 }
 
 // ── NAV ──────────────────────────────────────────────────────────────────────
